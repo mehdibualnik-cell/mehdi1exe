@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>RIVALS ULTIMATE - Die originale Roblox-Erfahrung</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>RIVALS - Roblox FPS (Original WebGL)</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Fredoka One', 'Segoe UI', cursive; background-color: #0a0f1f; }
-        canvas { display: block; width: 100%; height: 100%; }
-        
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Fredoka One', 'Segoe UI', cursive;
+            background-color: #0a0f1f;
+            height: 100%;
+            width: 100%;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
         /* Modernes UI Overlay - Inspiriert von Roblox RIVALS */
         .ui {
             position: absolute;
@@ -228,7 +238,7 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // --- SZENE & KAMERA ---
+        // --- SZENE & KAMERA (VOLLWERTIGE 3D-WELT)---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a1030);
         scene.fog = new THREE.FogExp2(0x0a1030, 0.006);
@@ -507,7 +517,7 @@
             { name: "RPG", damage: 60, spread: 0.05, pellets: 1, color: 0xaa5555, cost: 35 }
         ];
         
-        // --- WAFFENMODELLE IN DER HAND (Keine Quadrate mehr)---
+        // --- WAFFENMODELLE IN DER HAND (VOLLWERTIGE 3D-MODELLE)---
         const weaponGroup = new THREE.Group();
         camera.add(weaponGroup);
         weaponGroup.position.set(0.32, -0.28, -0.55);
@@ -920,6 +930,11 @@
         
         window.addEventListener('click', (e) => {
             if(document.pointerLockElement === renderer.domElement) shoot();
+        });
+        
+        document.getElementById('changeMapBtn').addEventListener('click', () => {
+            const selected = document.getElementById('mapSelect').value;
+            switchMap(selected);
         });
         
         // --- TELEPORTATIONS-PADS (Originalgetreue Funktion)---
