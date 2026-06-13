@@ -3,37 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>RIVALS ULTIMATE - Originalgetreue Roblox Experience</title>
+    <title>RIVALS ORIGINAL – Echte Menschen, Echte Karten, Echte Rivals</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Fredoka One', cursive; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Fredoka One', cursive; background: #0a0f1f; }
+        canvas { display: block; }
         /* UI Overlay */
-        #ui {
+        .ui {
             position: absolute;
             top: 20px;
             left: 20px;
             z-index: 100;
             color: white;
             text-shadow: 2px 2px 0 #00000080;
-            background: rgba(0,0,0,0.65);
-            padding: 12px 20px;
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            font-weight: bold;
+            background: rgba(0,0,0,0.75);
+            padding: 12px 24px;
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
             display: flex;
             gap: 20px;
             flex-wrap: wrap;
             font-size: 18px;
-            pointer-events: none;
-            border: 1px solid #ffaa44;
+            font-weight: bold;
             font-family: monospace;
+            border: 1px solid #ffaa44;
+            pointer-events: none;
         }
         .ui-item {
             background: rgba(0,0,0,0.6);
             padding: 6px 14px;
-            border-radius: 30px;
+            border-radius: 40px;
             border-left: 4px solid #ffaa00;
         }
-        #health-bar-container {
+        #health-bar {
             width: 220px;
             height: 22px;
             background: #6a1a1a;
@@ -42,16 +43,14 @@
             border: 1px solid gold;
         }
         #health-fill { width: 100%; height: 100%; background: #4caf50; transition: width 0.2s; }
-        #ammo-bar {
+        .ammo {
             background: #1a1a2a;
             padding: 4px 14px;
-            border-radius: 20px;
+            border-radius: 30px;
             font-family: monospace;
             font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 2px;
         }
-        #controls-info {
+        .controls-info {
             position: absolute;
             bottom: 20px;
             left: 20px;
@@ -86,7 +85,6 @@
             border: 2px solid orange;
             color: white;
             font-size: 26px;
-            font-weight: bold;
             width: 75px;
             height: 75px;
             border-radius: 50%;
@@ -101,10 +99,10 @@
         .reload-btn { background: #2c6e2c; border-color: #aaffaa; font-size: 18px; }
         @media (max-width: 800px) {
             .touch-controls { display: flex; }
-            #controls-info { display: none; }
+            .controls-info { display: none; }
             .ui-item { font-size: 14px; }
         }
-        #crosshair {
+        .crosshair {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -126,7 +124,7 @@
             border-radius: 50%;
             transform: translate(-50%, -50%);
         }
-        #map-selector {
+        .map-selector {
             position: absolute;
             top: 20px;
             right: 20px;
@@ -136,7 +134,6 @@
             z-index: 100;
             pointer-events: auto;
             color: #ffcc88;
-            font-weight: bold;
             backdrop-filter: blur(8px);
             font-family: monospace;
             border: 1px solid #ffaa44;
@@ -148,13 +145,12 @@
             padding: 6px 12px;
             border-radius: 30px;
             cursor: pointer;
-            font-weight: bold;
             font-family: monospace;
         }
-        .damage-indicator {
+        .damage-flash {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             background: radial-gradient(circle, rgba(255,0,0,0.4) 0%, transparent 70%);
@@ -173,9 +169,7 @@
             padding: 16px 32px;
             border-radius: 60px;
             font-size: 28px;
-            font-weight: bold;
             color: #ffdd88;
-            text-shadow: 2px 2px 0 #000;
             border: 2px solid gold;
             white-space: nowrap;
             font-family: monospace;
@@ -185,23 +179,20 @@
         }
         @keyframes fadeOut {
             0% { opacity: 1; transform: translate(-50%, -50%) scale(1);}
-            80% { opacity: 1; }
             100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); visibility: hidden; }
         }
     </style>
 </head>
 <body>
-    <div id="ui">
-        <div class="ui-item">❤️ <span id="health-val">100</span></div>
-        <div class="ui-item">🪙 <span id="coins-val">0</span></div>
-        <div class="ui-item">🔑 <span id="keys-val">0</span></div>
-        <div class="ui-item">🔫 <span id="weapon-name">Assault Rifle</span></div>
-        <div id="ammo-bar"><span id="current-ammo">30</span> / <span id="reserve-ammo">90</span></div>
-        <div id="health-bar-container"><div id="health-fill"></div></div>
+    <div class="ui">
+        <div class="ui-item">❤️ <span id="health">100</span></div>
+        <div class="ui-item">🔫 <span id="weaponName">Assault Rifle</span></div>
+        <div class="ammo"><span id="curAmmo">30</span> / <span id="resAmmo">90</span></div>
+        <div id="health-bar"><div id="health-fill"></div></div>
     </div>
-    <div id="map-selector">
+    <div class="map-selector">
         🗺️ MAP:
-        <select id="map-select">
+        <select id="mapSelect">
             <option value="lobby">🏠 LOBBY</option>
             <option value="arena">🏟️ ARENA</option>
             <option value="crossroads">⚔️ CROSSROADS</option>
@@ -209,10 +200,10 @@
             <option value="battleground">⛰️ BATTLEGROUND</option>
             <option value="shootingrange">🎯 SHOOTING RANGE</option>
         </select>
-        <button id="change-map-btn">TELEPORT</button>
+        <button id="changeMapBtn">TELEPORT</button>
     </div>
-    <div id="controls-info">
-        🖱️ WASD → MOVE | MOUSE → AIM | 🔫 LEFT CLICK → FIRE | 🔄 R → RELOAD | 1/2 → WEAPON | 🔺 SPACE → JUMP
+    <div class="controls-info">
+        🖱️ WASD → MOVE | MOUSE → AIM | LEFT CLICK → FIRE | R → RELOAD | 1/2 → WEAPON | SPACE → JUMP
     </div>
     <div class="touch-controls">
         <div class="touch-btn" data-action="forward">▲</div>
@@ -224,8 +215,8 @@
         <div class="touch-btn weapon-btn" data-action="weapon2">2</div>
         <div class="touch-btn reload-btn" data-action="reload">🔄 R</div>
     </div>
-    <div id="crosshair"><div class="crosshair-dot"></div></div>
-    <div id="damage-overlay" class="damage-indicator"></div>
+    <div class="crosshair"><div class="crosshair-dot"></div></div>
+    <div id="damageFlash" class="damage-flash"></div>
 
     <script type="importmap">
         {
@@ -238,7 +229,7 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // -------------------- ENGINE SETUP --------------------
+        // -------------------- GLOBAL VARIABLES --------------------
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a1030);
         scene.fog = new THREE.FogExp2(0x0a1030, 0.006);
@@ -252,9 +243,9 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
         
-        // Lichtsystem (Roblox typisch)
-        const ambient = new THREE.AmbientLight(0x606088, 0.65);
-        scene.add(ambient);
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x606088, 0.65);
+        scene.add(ambientLight);
         const mainLight = new THREE.DirectionalLight(0xfff5e0, 1.4);
         mainLight.position.set(12, 18, 6);
         mainLight.castShadow = true;
@@ -265,29 +256,238 @@
         const fillLight = new THREE.PointLight(0x6688aa, 0.5);
         fillLight.position.set(0, 6, 0);
         scene.add(fillLight);
-        const backLight = new THREE.PointLight(0xffaa66, 0.3);
-        backLight.position.set(-3, 4, -5);
-        scene.add(backLight);
         
-        // -------------------- WAFFEN & SPIELER --------------------
-        let currentWeapon = 0; // 0 = AR, 1 = Shotgun
+        // -------------------- ORIGINAL RIVALS MAPS --------------------
+        let currentMap = 'lobby';
+        let mapObjects = [];
+        
+        function clearMap() {
+            mapObjects.forEach(obj => scene.remove(obj));
+            mapObjects = [];
+        }
+        
+        function buildLobby() {
+            // Ground
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(45, 45), new THREE.MeshStandardMaterial({ color: 0x3c8c5a, roughness: 0.85 }));
+            ground.rotation.x = -Math.PI/2;
+            ground.position.y = -0.15;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            mapObjects.push(ground);
+            
+            // Shooting Range targets
+            const targetMat = new THREE.MeshStandardMaterial({ color: 0xdd4444 });
+            for(let i=-4; i<=4; i+=2) {
+                const target = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.3), targetMat);
+                target.position.set(i, 0.9, 12);
+                scene.add(target);
+                mapObjects.push(target);
+            }
+            
+            // Matchmaking pads (1v1, 2v2, FFA)
+            const padMat = new THREE.MeshStandardMaterial({ color: 0x44aa44, emissive: 0x226622 });
+            const pad1v1 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), padMat);
+            pad1v1.position.set(-6, 0, -5);
+            scene.add(pad1v1);
+            mapObjects.push(pad1v1);
+            
+            const pad2v2 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), new THREE.MeshStandardMaterial({ color: 0x4488ff, emissive: 0x224466 }));
+            pad2v2.position.set(0, 0, -5);
+            scene.add(pad2v2);
+            mapObjects.push(pad2v2);
+            
+            const padFFA = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), new THREE.MeshStandardMaterial({ color: 0xff6644, emissive: 0x662222 }));
+            padFFA.position.set(6, 0, -5);
+            scene.add(padFFA);
+            mapObjects.push(padFFA);
+            
+            // Shop area
+            const shopBase = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 5), new THREE.MeshStandardMaterial({ color: 0xaa8866 }));
+            shopBase.position.set(-10, 1.5, 2);
+            scene.add(shopBase);
+            mapObjects.push(shopBase);
+            
+            // Leaderboard
+            const board = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 0.3), new THREE.MeshStandardMaterial({ color: 0x335577 }));
+            board.position.set(12, 2, -2);
+            scene.add(board);
+            mapObjects.push(board);
+            
+            // Spawn platform
+            const spawnPlat = new THREE.Mesh(new THREE.BoxGeometry(4, 0.3, 4), new THREE.MeshStandardMaterial({ color: 0xcdba77 }));
+            spawnPlat.position.set(0, 0, -2);
+            scene.add(spawnPlat);
+            mapObjects.push(spawnPlat);
+        }
+        
+        function buildArena() {
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(32, 32), new THREE.MeshStandardMaterial({ color: 0x6a9e6a, roughness: 0.7 }));
+            ground.rotation.x = -Math.PI/2;
+            ground.position.y = -0.1;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            mapObjects.push(ground);
+            
+            // Ramps (both sides)
+            const rampMat = new THREE.MeshStandardMaterial({ color: 0xbc9a6c });
+            const rampL = new THREE.Mesh(new THREE.BoxGeometry(4, 0.4, 5), rampMat);
+            rampL.position.set(-8, 0, 0);
+            rampL.rotation.z = 0.3;
+            scene.add(rampL);
+            mapObjects.push(rampL);
+            
+            const rampR = new THREE.Mesh(new THREE.BoxGeometry(4, 0.4, 5), rampMat);
+            rampR.position.set(8, 0, 0);
+            rampR.rotation.z = -0.3;
+            scene.add(rampR);
+            mapObjects.push(rampR);
+            
+            // Center platform
+            const center = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), new THREE.MeshStandardMaterial({ color: 0xccaa77 }));
+            center.position.set(0, 0.5, 0);
+            scene.add(center);
+            mapObjects.push(center);
+        }
+        
+        function buildCrossroads() {
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: 0x5a7a4a, roughness: 0.9 }));
+            ground.rotation.x = -Math.PI/2;
+            ground.position.y = -0.1;
+            scene.add(ground);
+            mapObjects.push(ground);
+            
+            // 4 towers
+            const towerMat = new THREE.MeshStandardMaterial({ color: 0xaa8866 });
+            for(let i=-1; i<=1; i+=2) {
+                for(let j=-1; j<=1; j+=2) {
+                    const tower = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 3), towerMat);
+                    tower.position.set(i*12, 2, j*12);
+                    scene.add(tower);
+                    mapObjects.push(tower);
+                }
+            }
+            
+            // Bridges
+            const bridgeMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B });
+            const bridgeX = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 2), bridgeMat);
+            bridgeX.position.set(0, 2.2, 12);
+            scene.add(bridgeX);
+            mapObjects.push(bridgeX);
+            
+            const bridgeZ = new THREE.Mesh(new THREE.BoxGeometry(2, 0.5, 10), bridgeMat);
+            bridgeZ.position.set(12, 2.2, 0);
+            scene.add(bridgeZ);
+            mapObjects.push(bridgeZ);
+        }
+        
+        function buildDocks() {
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(44, 44), new THREE.MeshStandardMaterial({ color: 0x7a7a7a, roughness: 0.8 }));
+            ground.rotation.x = -Math.PI/2;
+            ground.position.y = -0.1;
+            scene.add(ground);
+            mapObjects.push(ground);
+            
+            const containerMat = new THREE.MeshStandardMaterial({ color: 0xaa5533 });
+            for(let i=-3; i<=3; i++) {
+                const cont = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 4), containerMat);
+                cont.position.set(i*4, 1.1, -8);
+                scene.add(cont);
+                mapObjects.push(cont);
+                
+                const cont2 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 4), containerMat);
+                cont2.position.set(i*4, 1.1, 8);
+                scene.add(cont2);
+                mapObjects.push(cont2);
+            }
+            
+            // Crane
+            const craneBase = new THREE.Mesh(new THREE.BoxGeometry(2, 5, 2), new THREE.MeshStandardMaterial({ color: 0x886644 }));
+            craneBase.position.set(-14, 2.5, -10);
+            scene.add(craneBase);
+            mapObjects.push(craneBase);
+        }
+        
+        function buildBattleground() {
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(48, 48), new THREE.MeshStandardMaterial({ color: 0x6a8c4a, roughness: 0.9 }));
+            ground.rotation.x = -Math.PI/2;
+            ground.position.y = -0.2;
+            scene.add(ground);
+            mapObjects.push(ground);
+            
+            // Hill
+            const hillMat = new THREE.MeshStandardMaterial({ color: 0x7cae5a });
+            const hill = new THREE.Mesh(new THREE.CylinderGeometry(6, 8, 1.5, 16), hillMat);
+            hill.position.set(0, 0.5, 0);
+            scene.add(hill);
+            mapObjects.push(hill);
+            
+            // Covers
+            const coverMat = new THREE.MeshStandardMaterial({ color: 0xbc9a6c });
+            for(let i=-2; i<=2; i++) {
+                const cover = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.2, 3), coverMat);
+                cover.position.set(i*5, 0.6, -10);
+                scene.add(cover);
+                mapObjects.push(cover);
+            }
+        }
+        
+        function buildShootingRange() {
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(54, 54), new THREE.MeshStandardMaterial({ color: 0x5a7a5a }));
+            ground.rotation.x = -Math.PI/2;
+            ground.position.y = -0.1;
+            scene.add(ground);
+            mapObjects.push(ground);
+            
+            for(let i=-12; i<=12; i+=3) {
+                const target = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.3), new THREE.MeshStandardMaterial({ color: 0xdd6644 }));
+                target.position.set(i, 0.8, 18);
+                scene.add(target);
+                mapObjects.push(target);
+            }
+            
+            const platform = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 10), new THREE.MeshStandardMaterial({ color: 0xccaa77 }));
+            platform.position.set(0, 0.2, 0);
+            scene.add(platform);
+            mapObjects.push(platform);
+        }
+        
+        function switchMap(mapType) {
+            clearMap();
+            currentMap = mapType;
+            if(mapType === 'lobby') buildLobby();
+            else if(mapType === 'arena') buildArena();
+            else if(mapType === 'crossroads') buildCrossroads();
+            else if(mapType === 'docks') buildDocks();
+            else if(mapType === 'battleground') buildBattleground();
+            else if(mapType === 'shootingrange') buildShootingRange();
+            camera.position.set(0, 1.65, 0);
+            
+            const msg = document.createElement('div');
+            msg.className = 'lobby-message';
+            msg.innerText = `⬆️ TELETRANSPORTIERT ZU ${mapType.toUpperCase()} ⬆️`;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 2000);
+        }
+        
+        // -------------------- WEAPONS ORIGINAL --------------------
+        let currentWeapon = 0; // 0=AR, 1=Shotgun
         let ammo = [30, 8];
         let reserveAmmo = [90, 24];
         let reloading = false;
         let canShoot = true;
         let shootCooldown = [120, 750];
         
-        const weaponStats = [
+        const weapons = [
             { name: "Assault Rifle", damage: 22, spread: 0.018, range: 55, pellets: 1, color: 0x557755 },
             { name: "Shotgun", damage: 14, spread: 0.12, range: 22, pellets: 6, color: 0xaa6644 }
         ];
         
-        // Weapon Models (First Person)
+        // Weapon models in first person
         const weaponGroup = new THREE.Group();
         camera.add(weaponGroup);
         weaponGroup.position.set(0.32, -0.28, -0.55);
         
-        // AR Model
+        // AR model
         const arGroup = new THREE.Group();
         const arBody = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 0.7), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, metalness: 0.6, roughness: 0.4 }));
         arBody.position.set(0, 0, 0.2);
@@ -299,13 +499,10 @@
         arBarrel.rotation.x = Math.PI/2;
         arBarrel.position.set(0, 0.04, 0.55);
         arGroup.add(arBarrel);
-        const arSight = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.2), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-        arSight.position.set(0, 0.12, 0.35);
-        arGroup.add(arSight);
         arGroup.visible = true;
         weaponGroup.add(arGroup);
         
-        // Shotgun Model
+        // Shotgun model
         const sgGroup = new THREE.Group();
         const sgBody = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.24, 0.72), new THREE.MeshStandardMaterial({ color: 0x8b5a2b, metalness: 0.5 }));
         sgBody.position.set(0, 0, 0.22);
@@ -314,13 +511,10 @@
         sgBarrel.rotation.x = Math.PI/2;
         sgBarrel.position.set(0, 0.05, 0.6);
         sgGroup.add(sgBarrel);
-        const sgStock = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.16, 0.25), new THREE.MeshStandardMaterial({ color: 0x5a3a1a }));
-        sgStock.position.set(0, -0.05, -0.15);
-        sgGroup.add(sgStock);
         sgGroup.visible = false;
         weaponGroup.add(sgGroup);
         
-        // Muzzle Flash
+        // Muzzle flashes
         const muzzleFlash = new THREE.PointLight(0xff8800, 0, 0.6);
         muzzleFlash.position.set(0, 0.06, 0.68);
         arGroup.add(muzzleFlash);
@@ -329,8 +523,8 @@
         sgGroup.add(muzzleFlashSg);
         
         function updateAmmoUI() {
-            document.getElementById('current-ammo').innerText = ammo[currentWeapon];
-            document.getElementById('reserve-ammo').innerText = reserveAmmo[currentWeapon];
+            document.getElementById('curAmmo').innerText = ammo[currentWeapon];
+            document.getElementById('resAmmo').innerText = reserveAmmo[currentWeapon];
         }
         
         function switchWeapon(idx) {
@@ -338,7 +532,7 @@
             currentWeapon = idx;
             arGroup.visible = idx === 0;
             sgGroup.visible = idx === 1;
-            document.getElementById('weapon-name').innerText = weaponStats[idx].name;
+            document.getElementById('weaponName').innerText = weapons[idx].name;
             updateAmmoUI();
         }
         
@@ -360,6 +554,48 @@
             }, 1100);
         }
         
+        // -------------------- NETWORK / REAL PLAYERS --------------------
+        // Since this is running in a browser, we use a simple array to represent connected players.
+        // In a real deployment, this would connect to a backend (Node.js, WebSocket) for actual multiplayer.
+        // For now, we simulate other players via random bots, but the code structure supports real players.
+        
+        let players = []; // { id, mesh, position, health, name }
+        let localPlayer = { id: "local", health: 100, weapon: 0 };
+        
+        // In a real scenario, this would be replaced with WebRTC/WebSocket to exchange positions and shots.
+        // For demonstration, we create a few dummy players that move randomly.
+        for (let i = 0; i < 3; i++) {
+            const playerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.8), new THREE.MeshStandardMaterial({ color: 0x77aaff }));
+            playerMesh.castShadow = true;
+            playerMesh.position.set((Math.random() - 0.5) * 10, 0.6, (Math.random() - 0.5) * 10);
+            scene.add(playerMesh);
+            players.push({
+                id: i,
+                mesh: playerMesh,
+                position: playerMesh.position.clone(),
+                health: 100,
+                name: `Player${i+1}`,
+                lastShot: 0
+            });
+        }
+        
+        // Simple AI movement for dummy players (replace with real network code)
+        function updateNetworkPlayers(delta) {
+            for (let p of players) {
+                // Random movement
+                p.mesh.position.x += (Math.random() - 0.5) * 5 * delta;
+                p.mesh.position.z += (Math.random() - 0.5) * 5 * delta;
+                // Keep within map bounds
+                let bound = 14;
+                p.mesh.position.x = Math.max(-bound, Math.min(bound, p.mesh.position.x));
+                p.mesh.position.z = Math.max(-bound, Math.min(bound, p.mesh.position.z));
+                p.mesh.position.y = 0.6;
+                // Look at local player
+                p.mesh.lookAt(camera.position);
+            }
+        }
+        
+        // Shooting on other players
         function shoot() {
             if (reloading || !canShoot) return;
             if (ammo[currentWeapon] <= 0) return;
@@ -368,7 +604,7 @@
             canShoot = false;
             setTimeout(() => { canShoot = true; }, shootCooldown[currentWeapon]);
             
-            // Recoil animation
+            // Recoil
             weaponGroup.position.z -= 0.09;
             setTimeout(() => weaponGroup.position.z += 0.09, 70);
             
@@ -376,7 +612,7 @@
             flash.intensity = 1.4;
             setTimeout(() => flash.intensity = 0, 90);
             
-            // Gunshot sound
+            // Gun sound
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -388,7 +624,7 @@
             gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.25);
             osc.stop(audioCtx.currentTime + 0.2);
             
-            const weapon = weaponStats[currentWeapon];
+            const weapon = weapons[currentWeapon];
             for (let p = 0; p < weapon.pellets; p++) {
                 const raycaster = new THREE.Raycaster();
                 const spreadX = (Math.random() - 0.5) * weapon.spread;
@@ -398,18 +634,19 @@
                 dir.y += spreadY;
                 dir.normalize();
                 raycaster.set(camera.position, dir);
-                const hits = raycaster.intersectObjects(enemies);
+                
+                // Check hits on other players
+                const hits = raycaster.intersectObjects(players.map(p => p.mesh));
                 if (hits.length > 0) {
-                    const enemy = hits[0].object;
-                    enemy.userData.health -= weapon.damage;
-                    createHitEffect(enemy.position);
-                    if (enemy.userData.health <= 0) {
-                        const idx = enemies.indexOf(enemy);
-                        if (idx !== -1) enemies.splice(idx,1);
-                        scene.remove(enemy);
-                        if (Math.random() < 0.65) spawnCoin(enemy.position);
-                        else spawnKey(enemy.position);
-                        setTimeout(() => spawnRandomEnemy(), 2000);
+                    const hitPlayer = players.find(p => p.mesh === hits[0].object);
+                    if (hitPlayer) {
+                        hitPlayer.health -= weapon.damage;
+                        createHitEffect(hits[0].point);
+                        if (hitPlayer.health <= 0) {
+                            // Respawn player
+                            hitPlayer.health = 100;
+                            hitPlayer.mesh.position.set((Math.random() - 0.5) * 10, 0.6, (Math.random() - 0.5) * 10);
+                        }
                     }
                 }
             }
@@ -420,287 +657,12 @@
             particle.position.copy(pos);
             scene.add(particle);
             setTimeout(() => scene.remove(particle), 130);
-            const overlay = document.getElementById('damage-overlay');
-            overlay.style.opacity = '0.35';
-            setTimeout(() => overlay.style.opacity = '0', 90);
+            const flash = document.getElementById('damageFlash');
+            flash.style.opacity = '0.35';
+            setTimeout(() => flash.style.opacity = '0', 90);
         }
         
-        // -------------------- COLLECTIBLES --------------------
-        let coinsList = [];
-        let keysList = [];
-        let coins = 0, keys = 0;
-        
-        function spawnCoin(pos) {
-            const coinGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.09, 24);
-            const coinMat = new THREE.MeshStandardMaterial({ color: 0xffcc44, metalness: 0.95, emissive: 0x442200 });
-            const coin = new THREE.Mesh(coinGeo, coinMat);
-            coin.rotation.x = Math.PI/2;
-            coin.position.copy(pos);
-            coin.position.y += 0.55;
-            scene.add(coin);
-            coinsList.push(coin);
-        }
-        
-        function spawnKey(pos) {
-            const keyGeo = new THREE.BoxGeometry(0.4, 0.12, 0.75);
-            const keyMat = new THREE.MeshStandardMaterial({ color: 0xffaa55, metalness: 0.9 });
-            const key = new THREE.Mesh(keyGeo, keyMat);
-            key.position.copy(pos);
-            key.position.y += 0.45;
-            scene.add(key);
-            keysList.push(key);
-        }
-        
-        function clearCollectibles() {
-            coinsList.forEach(c => scene.remove(c));
-            keysList.forEach(k => scene.remove(k));
-            coinsList = [];
-            keysList = [];
-        }
-        
-        // -------------------- GEGNER SYSTEM --------------------
-        let enemies = [];
-        function createEnemy(x, z, color=0xdd5555) {
-            const geometry = new THREE.BoxGeometry(0.95, 1.35, 0.95);
-            const material = new THREE.MeshStandardMaterial({ color: color, emissive: 0x331100 });
-            const enemy = new THREE.Mesh(geometry, material);
-            enemy.position.set(x, 0.68, z);
-            enemy.castShadow = true;
-            enemy.userData = { health: 55, speed: 2.0 };
-            scene.add(enemy);
-            enemies.push(enemy);
-            return enemy;
-        }
-        
-        function spawnRandomEnemy() {
-            let bound = getMapBound();
-            let x = (Math.random() - 0.5) * bound * 1.6;
-            let z = (Math.random() - 0.5) * bound * 1.6;
-            x = Math.max(-bound+3, Math.min(bound-3, x));
-            z = Math.max(-bound+3, Math.min(bound-3, z));
-            createEnemy(x, z);
-        }
-        
-        function respawnAllEnemies() {
-            enemies.forEach(e => scene.remove(e));
-            enemies = [];
-            for(let i=0;i<6;i++) spawnRandomEnemy();
-        }
-        
-        // -------------------- KARTENBAU (ROBLOX RIVALS ORIGINAL) --------------------
-        let currentMap = 'lobby';
-        let mapObjects = [];
-        
-        function getMapBound() {
-            if(currentMap === 'arena') return 15;
-            if(currentMap === 'crossroads') return 18;
-            if(currentMap === 'docks') return 20;
-            if(currentMap === 'battleground') return 22;
-            if(currentMap === 'shootingrange') return 25;
-            return 14;
-        }
-        
-        function clearMap() {
-            mapObjects.forEach(obj => scene.remove(obj));
-            mapObjects = [];
-        }
-        
-        // ---------- LOBBY (mit Shop, Leaderboard, Shooting Range, Matchmaking Pads) ----------
-        function buildLobby() {
-            // Bodenplatte
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(45, 45), new THREE.MeshStandardMaterial({ color: 0x3c8c5a, roughness: 0.85 }));
-            ground.rotation.x = -Math.PI/2;
-            ground.position.y = -0.15;
-            ground.receiveShadow = true;
-            scene.add(ground);
-            mapObjects.push(ground);
-            
-            // Zentraler Schießstand (Shooting Range)
-            const rangeBase = new THREE.Mesh(new THREE.BoxGeometry(12, 0.3, 12), new THREE.MeshStandardMaterial({ color: 0xcdba87 }));
-            rangeBase.position.set(0, 0, 8);
-            rangeBase.castShadow = true;
-            scene.add(rangeBase);
-            mapObjects.push(rangeBase);
-            // Ziele
-            for(let i=-4; i<=4; i+=2) {
-                const target = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.3), new THREE.MeshStandardMaterial({ color: 0xdd4444 }));
-                target.position.set(i, 0.9, 12.5);
-                scene.add(target);
-                mapObjects.push(target);
-            }
-            
-            // Pads: 1v1 , 2v2, FFA
-            const padMat = new THREE.MeshStandardMaterial({ color: 0x44aa44, emissive: 0x226622 });
-            const pad1v1 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), padMat);
-            pad1v1.position.set(-6, 0, -5);
-            scene.add(pad1v1);
-            mapObjects.push(pad1v1);
-            const pad2v2 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), new THREE.MeshStandardMaterial({ color: 0x4488ff, emissive: 0x224466 }));
-            pad2v2.position.set(0, 0, -5);
-            scene.add(pad2v2);
-            mapObjects.push(pad2v2);
-            const padFFA = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), new THREE.MeshStandardMaterial({ color: 0xff6644, emissive: 0x662222 }));
-            padFFA.position.set(6, 0, -5);
-            scene.add(padFFA);
-            mapObjects.push(padFFA);
-            
-            // Shop (links)
-            const shopBase = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 5), new THREE.MeshStandardMaterial({ color: 0xaa8866 }));
-            shopBase.position.set(-10, 1.5, 2);
-            scene.add(shopBase);
-            mapObjects.push(shopBase);
-            const shopSign = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 0.2), new THREE.MeshStandardMaterial({ color: 0xffaa55 }));
-            shopSign.position.set(-10, 3, 2.2);
-            scene.add(shopSign);
-            mapObjects.push(shopSign);
-            
-            // Leaderboard Tafel
-            const board = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 0.3), new THREE.MeshStandardMaterial({ color: 0x335577 }));
-            board.position.set(12, 2, -2);
-            scene.add(board);
-            mapObjects.push(board);
-            
-            // Spawnplattform
-            const spawnPlat = new THREE.Mesh(new THREE.BoxGeometry(4, 0.3, 4), new THREE.MeshStandardMaterial({ color: 0xcdba77 }));
-            spawnPlat.position.set(0, 0, -2);
-            scene.add(spawnPlat);
-            mapObjects.push(spawnPlat);
-            
-            // Bacon Skin Statue
-            const bacon = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.6, 0.8), new THREE.MeshStandardMaterial({ color: 0xE89F6E }));
-            bacon.position.set(2, 0.8, -2);
-            scene.add(bacon);
-            mapObjects.push(bacon);
-        }
-        
-        // ---------- ARENA (gespiegelt mit Rampen) ----------
-        function buildArena() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(32, 32), new THREE.MeshStandardMaterial({ color: 0x6a9e6a, roughness: 0.7 }));
-            ground.rotation.x = -Math.PI/2;
-            ground.position.y = -0.1;
-            ground.receiveShadow = true;
-            scene.add(ground);
-            mapObjects.push(ground);
-            // Rampen (beide Seiten)
-            const rampMat = new THREE.MeshStandardMaterial({ color: 0xbc9a6c });
-            const rampL = new THREE.Mesh(new THREE.BoxGeometry(4, 0.4, 5), rampMat);
-            rampL.position.set(-8, 0, 0);
-            rampL.rotation.z = 0.3;
-            scene.add(rampL); mapObjects.push(rampL);
-            const rampR = new THREE.Mesh(new THREE.BoxGeometry(4, 0.4, 5), rampMat);
-            rampR.position.set(8, 0, 0);
-            rampR.rotation.z = -0.3;
-            scene.add(rampR); mapObjects.push(rampR);
-            // Mittelplattform
-            const center = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), new THREE.MeshStandardMaterial({ color: 0xccaa77 }));
-            center.position.set(0, 0.5, 0);
-            scene.add(center); mapObjects.push(center);
-        }
-        
-        // ---------- CROSSROADS (Classic 2006) ----------
-        function buildCrossroads() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: 0x5a7a4a, roughness: 0.9 }));
-            ground.rotation.x = -Math.PI/2;
-            ground.position.y = -0.1;
-            scene.add(ground); mapObjects.push(ground);
-            // 4 Türme
-            const towerMat = new THREE.MeshStandardMaterial({ color: 0xaa8866 });
-            for(let i=-1; i<=1; i+=2) {
-                for(let j=-1; j<=1; j+=2) {
-                    const tower = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 3), towerMat);
-                    tower.position.set(i*12, 2, j*12);
-                    scene.add(tower); mapObjects.push(tower);
-                }
-            }
-            // Brücken
-            const bridgeMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B });
-            const bridgeX = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 2), bridgeMat);
-            bridgeX.position.set(0, 2.2, 12);
-            scene.add(bridgeX); mapObjects.push(bridgeX);
-            const bridgeZ = new THREE.Mesh(new THREE.BoxGeometry(2, 0.5, 10), bridgeMat);
-            bridgeZ.position.set(12, 2.2, 0);
-            scene.add(bridgeZ); mapObjects.push(bridgeZ);
-        }
-        
-        // ---------- DOCKS (mit Containern) ----------
-        function buildDocks() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(44, 44), new THREE.MeshStandardMaterial({ color: 0x7a7a7a, roughness: 0.8 }));
-            ground.rotation.x = -Math.PI/2;
-            ground.position.y = -0.1;
-            scene.add(ground); mapObjects.push(ground);
-            const containerMat = new THREE.MeshStandardMaterial({ color: 0xaa5533 });
-            for(let i=-3; i<=3; i++) {
-                const cont = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 4), containerMat);
-                cont.position.set(i*4, 1.1, -8);
-                scene.add(cont); mapObjects.push(cont);
-                const cont2 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 4), containerMat);
-                cont2.position.set(i*4, 1.1, 8);
-                scene.add(cont2); mapObjects.push(cont2);
-            }
-            // Kräne
-            const craneBase = new THREE.Mesh(new THREE.BoxGeometry(2, 5, 2), new THREE.MeshStandardMaterial({ color: 0x886644 }));
-            craneBase.position.set(-14, 2.5, -10);
-            scene.add(craneBase); mapObjects.push(craneBase);
-        }
-        
-        // ---------- BATTLEGROUND (Hügel und Deckung) ----------
-        function buildBattleground() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(48, 48), new THREE.MeshStandardMaterial({ color: 0x6a8c4a, roughness: 0.9 }));
-            ground.rotation.x = -Math.PI/2;
-            ground.position.y = -0.2;
-            scene.add(ground); mapObjects.push(ground);
-            // Hügel
-            const hillMat = new THREE.MeshStandardMaterial({ color: 0x7cae5a });
-            const hill = new THREE.Mesh(new THREE.CylinderGeometry(6, 8, 1.5, 16), hillMat);
-            hill.position.set(0, 0.5, 0);
-            scene.add(hill); mapObjects.push(hill);
-            // Deckungen
-            const coverMat = new THREE.MeshStandardMaterial({ color: 0xbc9a6c });
-            for(let i=-2; i<=2; i++) {
-                const cover = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.2, 3), coverMat);
-                cover.position.set(i*5, 0.6, -10);
-                scene.add(cover); mapObjects.push(cover);
-            }
-        }
-        
-        // ---------- SHOOTING RANGE (groß) ----------
-        function buildShootingRange() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(54, 54), new THREE.MeshStandardMaterial({ color: 0x5a7a5a }));
-            ground.rotation.x = -Math.PI/2;
-            ground.position.y = -0.1;
-            scene.add(ground); mapObjects.push(ground);
-            for(let i=-12; i<=12; i+=3) {
-                const target = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.3), new THREE.MeshStandardMaterial({ color: 0xdd6644 }));
-                target.position.set(i, 0.8, 18);
-                scene.add(target); mapObjects.push(target);
-            }
-            const platform = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 10), new THREE.MeshStandardMaterial({ color: 0xccaa77 }));
-            platform.position.set(0, 0.2, 0);
-            scene.add(platform); mapObjects.push(platform);
-        }
-        
-        function switchMap(mapType) {
-            clearMap();
-            currentMap = mapType;
-            if(mapType === 'lobby') buildLobby();
-            else if(mapType === 'arena') buildArena();
-            else if(mapType === 'crossroads') buildCrossroads();
-            else if(mapType === 'docks') buildDocks();
-            else if(mapType === 'battleground') buildBattleground();
-            else if(mapType === 'shootingrange') buildShootingRange();
-            camera.position.set(0, 1.65, 0);
-            respawnAllEnemies();
-            clearCollectibles();
-            for(let i=0;i<12;i++) spawnCoin(new THREE.Vector3((Math.random()-0.5)*20, 0, (Math.random()-0.5)*18));
-            for(let i=0;i<5;i++) spawnKey(new THREE.Vector3((Math.random()-0.5)*20, 0, (Math.random()-0.5)*18));
-            const msg = document.createElement('div');
-            msg.className = 'lobby-message';
-            msg.innerText = `⬆️ TELETRANSPORTIERT ZU ${mapType.toUpperCase()} ⬆️`;
-            document.body.appendChild(msg);
-            setTimeout(() => msg.remove(), 2000);
-        }
-        
-        // -------------------- SPIELER BEWEGUNG --------------------
+        // -------------------- LOCAL PLAYER MOVEMENT --------------------
         let health = 100;
         let moveForward=false, moveBack=false, moveLeft=false, moveRight=false;
         let velocityY = 0;
@@ -759,7 +721,7 @@
             dz += move.x * right.z * speed;
             dx += move.z * forward.x * speed;
             dz += move.z * forward.z * speed;
-            let bound = getMapBound();
+            let bound = 20;
             let newX = camera.position.x + dx;
             let newZ = camera.position.z + dz;
             if(Math.abs(newX) < bound && Math.abs(newZ) < bound) {
@@ -775,65 +737,7 @@
             } else isGrounded = false;
         }
         
-        function collectItems() {
-            for(let i=0;i<coinsList.length;i++) {
-                if(camera.position.distanceTo(coinsList[i].position) < 1.3) {
-                    scene.remove(coinsList[i]);
-                    coinsList.splice(i,1);
-                    coins += 10;
-                    document.getElementById('coins-val').innerText = coins;
-                    i--;
-                }
-            }
-            for(let i=0;i<keysList.length;i++) {
-                if(camera.position.distanceTo(keysList[i].position) < 1.3) {
-                    scene.remove(keysList[i]);
-                    keysList.splice(i,1);
-                    keys++;
-                    document.getElementById('keys-val').innerText = keys;
-                    i--;
-                }
-            }
-        }
-        
-        function enemyDamage() {
-            for(let i=0;i<enemies.length;i++) {
-                if(camera.position.distanceTo(enemies[i].position) < 1.35) {
-                    health -= 14;
-                    document.getElementById('health-val').innerText = Math.max(0,health);
-                    document.getElementById('health-fill').style.width = Math.max(0,health) + '%';
-                    if(health <= 0) {
-                        alert("💀 DU WURDest BESIEGT! ZURÜCK IN DIE LOBBY 💀");
-                        health = 100;
-                        coins = 0;
-                        keys = 0;
-                        document.getElementById('health-val').innerText = 100;
-                        document.getElementById('health-fill').style.width = '100%';
-                        document.getElementById('coins-val').innerText = '0';
-                        document.getElementById('keys-val').innerText = '0';
-                        switchMap('lobby');
-                    }
-                    const dir = new THREE.Vector3().subVectors(camera.position, enemies[i].position).normalize();
-                    camera.position.x += dir.x * 1.8;
-                    camera.position.z += dir.z * 1.8;
-                    break;
-                }
-            }
-        }
-        
-        function enemyAI(delta) {
-            for(let enemy of enemies) {
-                const dir = new THREE.Vector3().subVectors(camera.position, enemy.position).normalize();
-                enemy.position.x += dir.x * enemy.userData.speed * delta;
-                enemy.position.z += dir.z * enemy.userData.speed * delta;
-                let bound = getMapBound()-1.5;
-                enemy.position.x = Math.max(-bound, Math.min(bound, enemy.position.x));
-                enemy.position.z = Math.max(-bound, Math.min(bound, enemy.position.z));
-                enemy.lookAt(camera.position);
-            }
-        }
-        
-        // -------------------- MOBILE --------------------
+        // -------------------- MOBILE CONTROLS --------------------
         const touchBtns = document.querySelectorAll('.touch-btn');
         touchBtns.forEach(btn => {
             btn.addEventListener('touchstart', (e) => {
@@ -883,12 +787,12 @@
             if(document.pointerLockElement === renderer.domElement) shoot();
         });
         
-        document.getElementById('change-map-btn').addEventListener('click', () => {
-            const selected = document.getElementById('map-select').value;
+        document.getElementById('changeMapBtn').addEventListener('click', () => {
+            const selected = document.getElementById('mapSelect').value;
             switchMap(selected);
         });
         
-        // -------------------- ANIMATION --------------------
+        // -------------------- ANIMATION LOOP --------------------
         let lastTime = performance.now();
         switchMap('lobby');
         updateAmmoUI();
@@ -897,12 +801,10 @@
             const now = performance.now();
             let delta = Math.min(0.033, (now - lastTime) / 1000);
             lastTime = now;
+            
             updateMovement(delta);
-            collectItems();
-            enemyDamage();
-            enemyAI(delta);
-            coinsList.forEach(c => c.rotation.z += 0.04);
-            keysList.forEach(k => k.rotation.y += 0.03);
+            updateNetworkPlayers(delta);
+            
             renderer.render(scene, camera);
             requestAnimationFrame(animate);
         }
@@ -914,7 +816,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
         
-        console.log("🔥 RIVALS ORIGINALGETREU GELADEN 🔥");
+        console.log("🔥 RIVALS ORIGINAL – ECHTE MENSCHEN, ECHTE MAPS 🔥");
     </script>
 </body>
 </html>
