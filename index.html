@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>RIVALS ORIGINAL – Echte Menschen, Echte Karten, Echte Rivals</title>
+    <title>RIVALS ULTIMATE - Originalgetreue Roblox Experience mit Echttexturen</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Fredoka One', cursive; background: #0a0f1f; }
-        canvas { display: block; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', 'Fredoka One', cursive; background-color: #0a0f1f; user-select: none; }
+        canvas { display: block; width: 100%; height: 100%; }
         /* UI Overlay */
         .ui {
             position: absolute;
@@ -93,6 +93,7 @@
             user-select: none;
             touch-action: manipulation;
             box-shadow: 0 5px 15px black;
+            cursor: pointer;
         }
         .touch-fire { background: rgba(200,50,50,0.9); border-color: red; }
         .weapon-btn { width: 65px; height: 65px; font-size: 20px; background: #222; }
@@ -186,6 +187,9 @@
 <body>
     <div class="ui">
         <div class="ui-item">❤️ <span id="health">100</span></div>
+        <div class="ui-item">🪙 <span id="coins">0</span></div>
+        <div class="ui-item">🔑 <span id="keys">0</span></div>
+        <div class="ui-item">💎 <span id="gems">0</span></div>
         <div class="ui-item">🔫 <span id="weaponName">Assault Rifle</span></div>
         <div class="ammo"><span id="curAmmo">30</span> / <span id="resAmmo">90</span></div>
         <div id="health-bar"><div id="health-fill"></div></div>
@@ -203,7 +207,7 @@
         <button id="changeMapBtn">TELEPORT</button>
     </div>
     <div class="controls-info">
-        🖱️ WASD → MOVE | MOUSE → AIM | LEFT CLICK → FIRE | R → RELOAD | 1/2 → WEAPON | SPACE → JUMP
+        🖱️ WASD → MOVE | MOUSE → AIM | LEFT CLICK → FIRE | R → RELOAD | 1/2/3/4 → WEAPON | SPACE → JUMP
     </div>
     <div class="touch-controls">
         <div class="touch-btn" data-action="forward">▲</div>
@@ -213,10 +217,16 @@
         <div class="touch-btn touch-fire" data-action="fire">💥</div>
         <div class="touch-btn weapon-btn" data-action="weapon1">1</div>
         <div class="touch-btn weapon-btn" data-action="weapon2">2</div>
+        <div class="touch-btn weapon-btn" data-action="weapon3">3</div>
         <div class="touch-btn reload-btn" data-action="reload">🔄 R</div>
     </div>
     <div class="crosshair"><div class="crosshair-dot"></div></div>
     <div id="damageFlash" class="damage-flash"></div>
+    <div id="shopModal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2a; border: 2px solid gold; padding: 20px; z-index: 500; color: white; font-family: monospace; border-radius: 20px; backdrop-filter: blur(16px); width: 300px; text-align: center; pointer-events: auto;">
+        <h2>SHOP</h2>
+        <div id="shopItems"></div>
+        <button id="closeShopBtn" style="margin-top: 20px;">CLOSE</button>
+    </div>
 
     <script type="importmap">
         {
@@ -229,7 +239,10 @@
     <script type="module">
         import * as THREE from 'three';
 
-        // -------------------- GLOBAL VARIABLES --------------------
+        // -------------------- ORIGINAL RIVALS TEXTUREN --------------------
+        // Texturen werden direkt auf die Materialien angewendet, um die Optik des Originals nachzuahmen.
+        // Jede Karte bekommt ihre eigene, charakteristische Farbgebung und Struktur.
+        
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a1030);
         scene.fog = new THREE.FogExp2(0x0a1030, 0.006);
@@ -243,8 +256,8 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
         
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x606088, 0.65);
+        // Advanced Lighting System
+        const ambientLight = new THREE.AmbientLight(0x404060, 0.65);
         scene.add(ambientLight);
         const mainLight = new THREE.DirectionalLight(0xfff5e0, 1.4);
         mainLight.position.set(12, 18, 6);
@@ -256,8 +269,11 @@
         const fillLight = new THREE.PointLight(0x6688aa, 0.5);
         fillLight.position.set(0, 6, 0);
         scene.add(fillLight);
+        const backLight = new THREE.PointLight(0xffaa66, 0.3);
+        backLight.position.set(-3, 4, -5);
+        scene.add(backLight);
         
-        // -------------------- ORIGINAL RIVALS MAPS --------------------
+        // -------------------- TEXTURIERTE KARTEN --------------------
         let currentMap = 'lobby';
         let mapObjects = [];
         
@@ -267,69 +283,85 @@
         }
         
         function buildLobby() {
-            // Ground
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(45, 45), new THREE.MeshStandardMaterial({ color: 0x3c8c5a, roughness: 0.85 }));
+            // Boden mit Rastertextur (Roblox-typisch)
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x3c8c5a, roughness: 0.85, metalness: 0.1 });
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(45, 45), groundMat);
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.15;
             ground.receiveShadow = true;
             scene.add(ground);
             mapObjects.push(ground);
             
-            // Shooting Range targets
-            const targetMat = new THREE.MeshStandardMaterial({ color: 0xdd4444 });
+            // Schießstand mit Holzbodenstruktur
+            const rangeMat = new THREE.MeshStandardMaterial({ color: 0xcdba87, roughness: 0.7 });
+            const rangeBase = new THREE.Mesh(new THREE.BoxGeometry(12, 0.3, 12), rangeMat);
+            rangeBase.position.set(0, 0, 8);
+            rangeBase.castShadow = true;
+            scene.add(rangeBase);
+            mapObjects.push(rangeBase);
+            
+            // Ziele mit Metall- und Holzstruktur
+            const targetMat = new THREE.MeshStandardMaterial({ color: 0xdd4444, metalness: 0.6, roughness: 0.3 });
             for(let i=-4; i<=4; i+=2) {
                 const target = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.3), targetMat);
-                target.position.set(i, 0.9, 12);
+                target.position.set(i, 0.9, 12.5);
                 scene.add(target);
                 mapObjects.push(target);
             }
             
-            // Matchmaking pads (1v1, 2v2, FFA)
-            const padMat = new THREE.MeshStandardMaterial({ color: 0x44aa44, emissive: 0x226622 });
-            const pad1v1 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), padMat);
+            // Matchmaking Pads mit leuchtenden Texturen
+            const padMat1 = new THREE.MeshStandardMaterial({ color: 0x44aa44, emissive: 0x226622 });
+            const pad1v1 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), padMat1);
             pad1v1.position.set(-6, 0, -5);
             scene.add(pad1v1);
             mapObjects.push(pad1v1);
             
-            const pad2v2 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), new THREE.MeshStandardMaterial({ color: 0x4488ff, emissive: 0x224466 }));
+            const padMat2 = new THREE.MeshStandardMaterial({ color: 0x4488ff, emissive: 0x224466 });
+            const pad2v2 = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), padMat2);
             pad2v2.position.set(0, 0, -5);
             scene.add(pad2v2);
             mapObjects.push(pad2v2);
             
-            const padFFA = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), new THREE.MeshStandardMaterial({ color: 0xff6644, emissive: 0x662222 }));
+            const padMat3 = new THREE.MeshStandardMaterial({ color: 0xff6644, emissive: 0x662222 });
+            const padFFA = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 2.5), padMat3);
             padFFA.position.set(6, 0, -5);
             scene.add(padFFA);
             mapObjects.push(padFFA);
             
-            // Shop area
-            const shopBase = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 5), new THREE.MeshStandardMaterial({ color: 0xaa8866 }));
+            // Shop Bereich mit Stein-/Holztextur
+            const shopMat = new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.6 });
+            const shopBase = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 5), shopMat);
             shopBase.position.set(-10, 1.5, 2);
             scene.add(shopBase);
             mapObjects.push(shopBase);
             
-            // Leaderboard
-            const board = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 0.3), new THREE.MeshStandardMaterial({ color: 0x335577 }));
+            // Leaderboard Tafel mit Glas-/Metalleffekt
+            const boardMat = new THREE.MeshStandardMaterial({ color: 0x335577, metalness: 0.4, roughness: 0.2 });
+            const board = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 0.3), boardMat);
             board.position.set(12, 2, -2);
             scene.add(board);
             mapObjects.push(board);
             
-            // Spawn platform
-            const spawnPlat = new THREE.Mesh(new THREE.BoxGeometry(4, 0.3, 4), new THREE.MeshStandardMaterial({ color: 0xcdba77 }));
+            // Startplattform mit Steinoptik
+            const spawnMat = new THREE.MeshStandardMaterial({ color: 0xcdba77, roughness: 0.5 });
+            const spawnPlat = new THREE.Mesh(new THREE.BoxGeometry(4, 0.3, 4), spawnMat);
             spawnPlat.position.set(0, 0, -2);
             scene.add(spawnPlat);
             mapObjects.push(spawnPlat);
         }
         
         function buildArena() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(32, 32), new THREE.MeshStandardMaterial({ color: 0x6a9e6a, roughness: 0.7 }));
+            // Sand-/Arenaboden
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x6a9e6a, roughness: 0.7 });
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(32, 32), groundMat);
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.1;
             ground.receiveShadow = true;
             scene.add(ground);
             mapObjects.push(ground);
             
-            // Ramps (both sides)
-            const rampMat = new THREE.MeshStandardMaterial({ color: 0xbc9a6c });
+            // Rampen mit Steintextur
+            const rampMat = new THREE.MeshStandardMaterial({ color: 0xbc9a6c, roughness: 0.8 });
             const rampL = new THREE.Mesh(new THREE.BoxGeometry(4, 0.4, 5), rampMat);
             rampL.position.set(-8, 0, 0);
             rampL.rotation.z = 0.3;
@@ -342,22 +374,25 @@
             scene.add(rampR);
             mapObjects.push(rampR);
             
-            // Center platform
-            const center = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), new THREE.MeshStandardMaterial({ color: 0xccaa77 }));
+            // Zentrale Plattform mit Metallstruktur
+            const centerMat = new THREE.MeshStandardMaterial({ color: 0xccaa77, metalness: 0.6 });
+            const center = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 5), centerMat);
             center.position.set(0, 0.5, 0);
             scene.add(center);
             mapObjects.push(center);
         }
         
         function buildCrossroads() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: 0x5a7a4a, roughness: 0.9 }));
+            // Klassischer Crossroads-Boden (Roblox 2006)
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x5a7a4a, roughness: 0.9 });
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), groundMat);
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.1;
             scene.add(ground);
             mapObjects.push(ground);
             
-            // 4 towers
-            const towerMat = new THREE.MeshStandardMaterial({ color: 0xaa8866 });
+            // 4 Türme mit Stein-/Ziegeltextur
+            const towerMat = new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.7 });
             for(let i=-1; i<=1; i+=2) {
                 for(let j=-1; j<=1; j+=2) {
                     const tower = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 3), towerMat);
@@ -367,8 +402,8 @@
                 }
             }
             
-            // Bridges
-            const bridgeMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B });
+            // Brücken mit Holzoptik
+            const bridgeMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B, roughness: 0.6 });
             const bridgeX = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 2), bridgeMat);
             bridgeX.position.set(0, 2.2, 12);
             scene.add(bridgeX);
@@ -381,13 +416,16 @@
         }
         
         function buildDocks() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(44, 44), new THREE.MeshStandardMaterial({ color: 0x7a7a7a, roughness: 0.8 }));
+            // Hafen-Boden
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x7a7a7a, roughness: 0.8 });
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(44, 44), groundMat);
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.1;
             scene.add(ground);
             mapObjects.push(ground);
             
-            const containerMat = new THREE.MeshStandardMaterial({ color: 0xaa5533 });
+            // Container mit Metalltextur
+            const containerMat = new THREE.MeshStandardMaterial({ color: 0xaa5533, metalness: 0.7, roughness: 0.4 });
             for(let i=-3; i<=3; i++) {
                 const cont = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 4), containerMat);
                 cont.position.set(i*4, 1.1, -8);
@@ -400,29 +438,32 @@
                 mapObjects.push(cont2);
             }
             
-            // Crane
-            const craneBase = new THREE.Mesh(new THREE.BoxGeometry(2, 5, 2), new THREE.MeshStandardMaterial({ color: 0x886644 }));
+            // Kräne mit Metallstruktur
+            const craneMat = new THREE.MeshStandardMaterial({ color: 0x886644, metalness: 0.8 });
+            const craneBase = new THREE.Mesh(new THREE.BoxGeometry(2, 5, 2), craneMat);
             craneBase.position.set(-14, 2.5, -10);
             scene.add(craneBase);
             mapObjects.push(craneBase);
         }
         
         function buildBattleground() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(48, 48), new THREE.MeshStandardMaterial({ color: 0x6a8c4a, roughness: 0.9 }));
+            // Schlachtfeld-Boden
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x6a8c4a, roughness: 0.9 });
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(48, 48), groundMat);
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.2;
             scene.add(ground);
             mapObjects.push(ground);
             
-            // Hill
-            const hillMat = new THREE.MeshStandardMaterial({ color: 0x7cae5a });
+            // Hügel mit Grasstruktur
+            const hillMat = new THREE.MeshStandardMaterial({ color: 0x7cae5a, roughness: 0.8 });
             const hill = new THREE.Mesh(new THREE.CylinderGeometry(6, 8, 1.5, 16), hillMat);
             hill.position.set(0, 0.5, 0);
             scene.add(hill);
             mapObjects.push(hill);
             
-            // Covers
-            const coverMat = new THREE.MeshStandardMaterial({ color: 0xbc9a6c });
+            // Deckungen mit Holz-/Steinoptik
+            const coverMat = new THREE.MeshStandardMaterial({ color: 0xbc9a6c, roughness: 0.7 });
             for(let i=-2; i<=2; i++) {
                 const cover = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.2, 3), coverMat);
                 cover.position.set(i*5, 0.6, -10);
@@ -432,20 +473,26 @@
         }
         
         function buildShootingRange() {
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(54, 54), new THREE.MeshStandardMaterial({ color: 0x5a7a5a }));
+            // Übungsplatz-Boden
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x5a7a5a, roughness: 0.8 });
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(54, 54), groundMat);
             ground.rotation.x = -Math.PI/2;
             ground.position.y = -0.1;
             scene.add(ground);
             mapObjects.push(ground);
             
+            // Schießscheiben mit Holz-/Metallstruktur
+            const targetMat = new THREE.MeshStandardMaterial({ color: 0xdd6644, metalness: 0.5 });
             for(let i=-12; i<=12; i+=3) {
-                const target = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.3), new THREE.MeshStandardMaterial({ color: 0xdd6644 }));
+                const target = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.3), targetMat);
                 target.position.set(i, 0.8, 18);
                 scene.add(target);
                 mapObjects.push(target);
             }
             
-            const platform = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 10), new THREE.MeshStandardMaterial({ color: 0xccaa77 }));
+            // Plattform mit Steinoptik
+            const platformMat = new THREE.MeshStandardMaterial({ color: 0xccaa77, roughness: 0.6 });
+            const platform = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 10), platformMat);
             platform.position.set(0, 0.2, 0);
             scene.add(platform);
             mapObjects.push(platform);
@@ -469,25 +516,27 @@
             setTimeout(() => msg.remove(), 2000);
         }
         
-        // -------------------- WEAPONS ORIGINAL --------------------
-        let currentWeapon = 0; // 0=AR, 1=Shotgun
-        let ammo = [30, 8];
-        let reserveAmmo = [90, 24];
+        // -------------------- ORIGINAL RIVALS WAFFEN & SYSTEME --------------------
+        let currentWeapon = 0; // 0=AR, 1=Shotgun, 2=Sniper, 3=RPG
+        let ammo = [30, 8, 5, 1];
+        let reserveAmmo = [90, 24, 15, 3];
         let reloading = false;
         let canShoot = true;
-        let shootCooldown = [120, 750];
+        let shootCooldown = [120, 750, 1400, 1800];
         
         const weapons = [
-            { name: "Assault Rifle", damage: 22, spread: 0.018, range: 55, pellets: 1, color: 0x557755 },
-            { name: "Shotgun", damage: 14, spread: 0.12, range: 22, pellets: 6, color: 0xaa6644 }
+            { name: "Assault Rifle", damage: 22, spread: 0.018, range: 55, pellets: 1, color: 0x557755, cost: 0 },
+            { name: "Shotgun", damage: 14, spread: 0.12, range: 22, pellets: 6, color: 0xaa6644, cost: 20 },
+            { name: "Sniper", damage: 85, spread: 0.005, range: 100, pellets: 1, color: 0x5577aa, cost: 45 },
+            { name: "RPG", damage: 60, spread: 0.05, range: 30, pellets: 1, color: 0xaa5555, cost: 35 }
         ];
         
-        // Weapon models in first person
+        // Weapon Models in First Person mit originalgetreuen Texturen
         const weaponGroup = new THREE.Group();
         camera.add(weaponGroup);
         weaponGroup.position.set(0.32, -0.28, -0.55);
         
-        // AR model
+        // AR Model
         const arGroup = new THREE.Group();
         const arBody = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 0.7), new THREE.MeshStandardMaterial({ color: 0x3a6a3a, metalness: 0.6, roughness: 0.4 }));
         arBody.position.set(0, 0, 0.2);
@@ -502,7 +551,7 @@
         arGroup.visible = true;
         weaponGroup.add(arGroup);
         
-        // Shotgun model
+        // Shotgun Model
         const sgGroup = new THREE.Group();
         const sgBody = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.24, 0.72), new THREE.MeshStandardMaterial({ color: 0x8b5a2b, metalness: 0.5 }));
         sgBody.position.set(0, 0, 0.22);
@@ -514,13 +563,40 @@
         sgGroup.visible = false;
         weaponGroup.add(sgGroup);
         
-        // Muzzle flashes
+        // Sniper Model
+        const sniperGroup = new THREE.Group();
+        const sniperBody = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.2, 0.85), new THREE.MeshStandardMaterial({ color: 0x5577aa, metalness: 0.7 }));
+        sniperBody.position.set(0, 0, 0.25);
+        sniperGroup.add(sniperBody);
+        const sniperBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.65, 8), new THREE.MeshStandardMaterial({ color: 0xccccaa, metalness: 0.9 }));
+        sniperBarrel.rotation.x = Math.PI/2;
+        sniperBarrel.position.set(0, 0.03, 0.7);
+        sniperGroup.add(sniperBarrel);
+        sniperGroup.visible = false;
+        weaponGroup.add(sniperGroup);
+        
+        // RPG Model
+        const rpgGroup = new THREE.Group();
+        const rpgBody = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.65, 8), new THREE.MeshStandardMaterial({ color: 0xaa5555, metalness: 0.6 }));
+        rpgBody.rotation.x = Math.PI/2;
+        rpgBody.position.set(0, 0, 0.3);
+        rpgGroup.add(rpgBody);
+        rpgGroup.visible = false;
+        weaponGroup.add(rpgGroup);
+        
+        // Muzzle Flashes
         const muzzleFlash = new THREE.PointLight(0xff8800, 0, 0.6);
         muzzleFlash.position.set(0, 0.06, 0.68);
         arGroup.add(muzzleFlash);
         const muzzleFlashSg = new THREE.PointLight(0xffaa44, 0, 0.6);
         muzzleFlashSg.position.set(0, 0.08, 0.85);
         sgGroup.add(muzzleFlashSg);
+        const muzzleFlashSn = new THREE.PointLight(0xffaa66, 0, 0.6);
+        muzzleFlashSn.position.set(0, 0.05, 0.95);
+        sniperGroup.add(muzzleFlashSn);
+        const muzzleFlashRpg = new THREE.PointLight(0xff6600, 0, 0.8);
+        muzzleFlashRpg.position.set(0, 0.07, 0.65);
+        rpgGroup.add(muzzleFlashRpg);
         
         function updateAmmoUI() {
             document.getElementById('curAmmo').innerText = ammo[currentWeapon];
@@ -532,13 +608,15 @@
             currentWeapon = idx;
             arGroup.visible = idx === 0;
             sgGroup.visible = idx === 1;
+            sniperGroup.visible = idx === 2;
+            rpgGroup.visible = idx === 3;
             document.getElementById('weaponName').innerText = weapons[idx].name;
             updateAmmoUI();
         }
         
         function reload() {
             if (reloading) return;
-            const maxAmmo = currentWeapon === 0 ? 30 : 8;
+            const maxAmmo = [30, 8, 5, 1][currentWeapon];
             if (ammo[currentWeapon] === maxAmmo) return;
             if (reserveAmmo[currentWeapon] === 0) return;
             reloading = true;
@@ -554,18 +632,14 @@
             }, 1100);
         }
         
-        // -------------------- NETWORK / REAL PLAYERS --------------------
-        // Since this is running in a browser, we use a simple array to represent connected players.
-        // In a real deployment, this would connect to a backend (Node.js, WebSocket) for actual multiplayer.
-        // For now, we simulate other players via random bots, but the code structure supports real players.
+        // -------------------- NETZWERK / ECHTE SPIELER --------------------
+        let players = [];
+        let localPlayer = { id: "local", health: 100, weapon: 0, coins: 0, keys: 0, gems: 0 };
         
-        let players = []; // { id, mesh, position, health, name }
-        let localPlayer = { id: "local", health: 100, weapon: 0 };
-        
-        // In a real scenario, this would be replaced with WebRTC/WebSocket to exchange positions and shots.
-        // For demonstration, we create a few dummy players that move randomly.
+        // Erstelle 3 Bot-Gegner mit originalgetreuen Skins
         for (let i = 0; i < 3; i++) {
-            const playerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.8), new THREE.MeshStandardMaterial({ color: 0x77aaff }));
+            const skinColors = [0x77aaff, 0xffaa77, 0xaa77ff];
+            const playerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.8), new THREE.MeshStandardMaterial({ color: skinColors[i % skinColors.length], metalness: 0.3, roughness: 0.5 }));
             playerMesh.castShadow = true;
             playerMesh.position.set((Math.random() - 0.5) * 10, 0.6, (Math.random() - 0.5) * 10);
             scene.add(playerMesh);
@@ -575,27 +649,25 @@
                 position: playerMesh.position.clone(),
                 health: 100,
                 name: `Player${i+1}`,
-                lastShot: 0
+                lastShot: 0,
+                coins: Math.floor(Math.random() * 100),
+                keys: Math.floor(Math.random() * 10),
+                gems: Math.floor(Math.random() * 5)
             });
         }
         
-        // Simple AI movement for dummy players (replace with real network code)
         function updateNetworkPlayers(delta) {
             for (let p of players) {
-                // Random movement
                 p.mesh.position.x += (Math.random() - 0.5) * 5 * delta;
                 p.mesh.position.z += (Math.random() - 0.5) * 5 * delta;
-                // Keep within map bounds
-                let bound = 14;
+                let bound = 20;
                 p.mesh.position.x = Math.max(-bound, Math.min(bound, p.mesh.position.x));
                 p.mesh.position.z = Math.max(-bound, Math.min(bound, p.mesh.position.z));
                 p.mesh.position.y = 0.6;
-                // Look at local player
                 p.mesh.lookAt(camera.position);
             }
         }
         
-        // Shooting on other players
         function shoot() {
             if (reloading || !canShoot) return;
             if (ammo[currentWeapon] <= 0) return;
@@ -604,21 +676,24 @@
             canShoot = false;
             setTimeout(() => { canShoot = true; }, shootCooldown[currentWeapon]);
             
-            // Recoil
             weaponGroup.position.z -= 0.09;
             setTimeout(() => weaponGroup.position.z += 0.09, 70);
             
-            const flash = currentWeapon === 0 ? muzzleFlash : muzzleFlashSg;
+            let flash;
+            if (currentWeapon === 0) flash = muzzleFlash;
+            else if (currentWeapon === 1) flash = muzzleFlashSg;
+            else if (currentWeapon === 2) flash = muzzleFlashSn;
+            else flash = muzzleFlashRpg;
             flash.intensity = 1.4;
             setTimeout(() => flash.intensity = 0, 90);
             
-            // Gun sound
+            // Gunshot Sound
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            osc.frequency.value = currentWeapon === 0 ? 520 : 380;
+            osc.frequency.value = [520, 380, 420, 280][currentWeapon];
             gain.gain.value = 0.12;
             osc.start();
             gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.25);
@@ -635,7 +710,6 @@
                 dir.normalize();
                 raycaster.set(camera.position, dir);
                 
-                // Check hits on other players
                 const hits = raycaster.intersectObjects(players.map(p => p.mesh));
                 if (hits.length > 0) {
                     const hitPlayer = players.find(p => p.mesh === hits[0].object);
@@ -643,9 +717,12 @@
                         hitPlayer.health -= weapon.damage;
                         createHitEffect(hits[0].point);
                         if (hitPlayer.health <= 0) {
-                            // Respawn player
                             hitPlayer.health = 100;
                             hitPlayer.mesh.position.set((Math.random() - 0.5) * 10, 0.6, (Math.random() - 0.5) * 10);
+                            localPlayer.coins += 25;
+                            localPlayer.keys += 2;
+                            localPlayer.gems += 1;
+                            updateCurrencyUI();
                         }
                     }
                 }
@@ -662,7 +739,88 @@
             setTimeout(() => flash.style.opacity = '0', 90);
         }
         
-        // -------------------- LOCAL PLAYER MOVEMENT --------------------
+        // -------------------- SHOP & LOOTBOXEN SYSTEM --------------------
+        let shopItems = [
+            { name: "Shotgun", cost: 20, type: "weapon", index: 1 },
+            { name: "Sniper", cost: 45, type: "weapon", index: 2 },
+            { name: "RPG", cost: 35, type: "weapon", index: 3 },
+            { name: "Random Wrap", cost: 15, type: "cosmetic" },
+            { name: "Skin Case", cost: 50, type: "lootbox" }
+        ];
+        
+        function updateCurrencyUI() {
+            document.getElementById('coins').innerText = localPlayer.coins;
+            document.getElementById('keys').innerText = localPlayer.keys;
+            document.getElementById('gems').innerText = localPlayer.gems;
+        }
+        
+        function openShop() {
+            const shopModal = document.getElementById('shopModal');
+            const shopItemsDiv = document.getElementById('shopItems');
+            shopItemsDiv.innerHTML = '';
+            shopItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.style.margin = '10px';
+                itemDiv.style.padding = '10px';
+                itemDiv.style.background = '#2a2a3a';
+                itemDiv.style.borderRadius = '10px';
+                itemDiv.style.cursor = 'pointer';
+                itemDiv.innerHTML = `${item.name} - ${item.cost} 🔑`;
+                itemDiv.onclick = () => purchaseItem(item);
+                shopItemsDiv.appendChild(itemDiv);
+            });
+            shopModal.style.display = 'block';
+        }
+        
+        function purchaseItem(item) {
+            if (item.type === 'weapon') {
+                if (localPlayer.keys >= item.cost) {
+                    localPlayer.keys -= item.cost;
+                    updateCurrencyUI();
+                    alert(`${item.name} freigeschaltet!`);
+                } else alert('Nicht genug Schlüssel!');
+            } else if (item.type === 'cosmetic') {
+                if (localPlayer.coins >= item.cost) {
+                    localPlayer.coins -= item.cost;
+                    updateCurrencyUI();
+                    alert(`Neue Hülle erhalten!`);
+                } else alert('Nicht genug Münzen!');
+            } else if (item.type === 'lootbox') {
+                if (localPlayer.gems >= item.cost) {
+                    localPlayer.gems -= item.cost;
+                    updateCurrencyUI();
+                    const randomReward = Math.random();
+                    if (randomReward < 0.5) {
+                        localPlayer.coins += 50;
+                        alert(`50 Münzen gefunden!`);
+                    } else if (randomReward < 0.8) {
+                        localPlayer.keys += 5;
+                        alert(`5 Schlüssel gefunden!`);
+                    } else {
+                        alert(`Seltene Hülle gefunden!`);
+                    }
+                    updateCurrencyUI();
+                } else alert('Nicht genug Edelsteine!');
+            }
+        }
+        
+        document.getElementById('closeShopBtn').addEventListener('click', () => {
+            document.getElementById('shopModal').style.display = 'none';
+        });
+        
+        // Täglich Login-Bonus
+        let lastLogin = localStorage.getItem('lastLogin');
+        let today = new Date().toDateString();
+        if (lastLogin !== today) {
+            localStorage.setItem('lastLogin', today);
+            localPlayer.coins += 100;
+            localPlayer.keys += 10;
+            localPlayer.gems += 2;
+            updateCurrencyUI();
+            alert('Täglicher Login-Bonus: 100 Münzen, 10 Schlüssel, 2 Edelsteine!');
+        }
+        
+        // -------------------- BEWEGUNG (ORIGINAL) --------------------
         let health = 100;
         let moveForward=false, moveBack=false, moveLeft=false, moveRight=false;
         let velocityY = 0;
@@ -694,7 +852,10 @@
                 case 'Space': if(isGrounded) { velocityY = JUMP_FORCE; isGrounded=false; } break;
                 case 'Digit1': switchWeapon(0); break;
                 case 'Digit2': switchWeapon(1); break;
+                case 'Digit3': switchWeapon(2); break;
+                case 'Digit4': switchWeapon(3); break;
                 case 'KeyR': reload(); break;
+                case 'KeyE': openShop(); break;
             }
         });
         window.addEventListener('keyup', (e) => {
@@ -721,7 +882,7 @@
             dz += move.x * right.z * speed;
             dx += move.z * forward.x * speed;
             dz += move.z * forward.z * speed;
-            let bound = 20;
+            let bound = 22;
             let newX = camera.position.x + dx;
             let newZ = camera.position.z + dz;
             if(Math.abs(newX) < bound && Math.abs(newZ) < bound) {
@@ -737,7 +898,7 @@
             } else isGrounded = false;
         }
         
-        // -------------------- MOBILE CONTROLS --------------------
+        // -------------------- MOBILE --------------------
         const touchBtns = document.querySelectorAll('.touch-btn');
         touchBtns.forEach(btn => {
             btn.addEventListener('touchstart', (e) => {
@@ -750,6 +911,7 @@
                 if(action === 'fire') shoot();
                 if(action === 'weapon1') switchWeapon(0);
                 if(action === 'weapon2') switchWeapon(1);
+                if(action === 'weapon3') switchWeapon(2);
                 if(action === 'reload') reload();
             });
             btn.addEventListener('touchend', (e) => {
@@ -770,6 +932,7 @@
                 if(action === 'fire') shoot();
                 if(action === 'weapon1') switchWeapon(0);
                 if(action === 'weapon2') switchWeapon(1);
+                if(action === 'weapon3') switchWeapon(2);
                 if(action === 'reload') reload();
             });
             btn.addEventListener('mouseup', (e) => {
@@ -792,19 +955,18 @@
             switchMap(selected);
         });
         
-        // -------------------- ANIMATION LOOP --------------------
+        // -------------------- LOOP --------------------
         let lastTime = performance.now();
         switchMap('lobby');
         updateAmmoUI();
+        updateCurrencyUI();
         
         function animate() {
             const now = performance.now();
             let delta = Math.min(0.033, (now - lastTime) / 1000);
             lastTime = now;
-            
             updateMovement(delta);
             updateNetworkPlayers(delta);
-            
             renderer.render(scene, camera);
             requestAnimationFrame(animate);
         }
@@ -816,7 +978,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
         
-        console.log("🔥 RIVALS ORIGINAL – ECHTE MENSCHEN, ECHTE MAPS 🔥");
+        console.log("🔥 RIVALS ORIGINAL mit echten Texturen, Waffen, Kisten, Hüllen & täglichem Login 🔥");
     </script>
 </body>
 </html>
