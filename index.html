@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Rivals - First Person Action</title>
+    <title>RIVALS - Roblox Style First Person Shooter</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Courier New', monospace;
-        }
+        body { margin: 0; overflow: hidden; font-family: 'Courier New', monospace; }
         /* UI Overlay */
         #ui {
             position: absolute;
@@ -32,24 +28,7 @@
             background: rgba(0,0,0,0.5);
             padding: 5px 12px;
             border-radius: 20px;
-            border-left: 3px solid gold;
-        }
-        #minimap {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 180px;
-            height: 180px;
-            background: rgba(0,0,0,0.7);
-            border: 3px solid #ffaa00;
-            border-radius: 12px;
-            z-index: 100;
-            pointer-events: none;
-        }
-        canvas.minimap-canvas {
-            width: 100%;
-            height: 100%;
-            border-radius: 8px;
+            border-left: 3px solid #ffaa00;
         }
         #health-bar {
             width: 200px;
@@ -58,12 +37,7 @@
             border-radius: 10px;
             overflow: hidden;
         }
-        #health-fill {
-            width: 100%;
-            height: 100%;
-            background: #0f0;
-            transition: width 0.2s;
-        }
+        #health-fill { width: 100%; height: 100%; background: #0f0; transition: width 0.2s; }
         #controls-info {
             position: absolute;
             bottom: 20px;
@@ -77,7 +51,7 @@
             pointer-events: none;
             z-index: 100;
         }
-        /* Mobile Touch Buttons (nur auf Touch-Geräten sichtbar) */
+        /* Touch Buttons */
         .touch-controls {
             position: absolute;
             bottom: 20px;
@@ -109,21 +83,12 @@
             touch-action: manipulation;
             box-shadow: 0 4px 10px black;
         }
-        .touch-fire {
-            background: rgba(200,50,50,0.9);
-            border-color: red;
-        }
-        .weapon-btn {
-            width: 60px;
-            height: 60px;
-            font-size: 18px;
-            background: #222;
-        }
+        .touch-fire { background: rgba(200,50,50,0.9); border-color: red; }
+        .weapon-btn { width: 60px; height: 60px; font-size: 18px; background: #222; }
         @media (max-width: 800px) {
             .touch-controls { display: flex; }
             #controls-info { display: none; }
             .ui-item { font-size: 12px; }
-            #minimap { width: 130px; height: 130px; }
         }
         #crosshair {
             position: absolute;
@@ -138,10 +103,42 @@
             z-index: 200;
             background: radial-gradient(circle, rgba(255,0,0,0.3) 2px, transparent 3px);
         }
-        .ammo {
-            background: #222;
-            font-size: 18px;
+        .ammo { background: #222; font-size: 18px; font-family: monospace; }
+        #map-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 100;
+            pointer-events: auto;
+            color: white;
             font-family: monospace;
+        }
+        #map-selector select, #map-selector button {
+            background: #333;
+            color: white;
+            border: 1px solid #ffaa00;
+            padding: 5px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        .lobby-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 300;
+            color: #ffaa00;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #ffaa00;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -149,15 +146,22 @@
     <div id="ui">
         <div class="ui-item">❤️ <span id="health-val">100</span>%</div>
         <div class="ui-item">🪙 <span id="coins-val">0</span></div>
+        <div class="ui-item">🔑 <span id="keys-val">0</span></div>
         <div class="ui-item">🔫 <span id="weapon-name">Pistole</span> <span id="ammo-count">∞</span></div>
         <div class="ui-item">🥓 Bacon Skin</div>
         <div id="health-bar"><div id="health-fill"></div></div>
     </div>
-    <div id="minimap">
-        <canvas id="minimapCanvas" class="minimap-canvas" width="300" height="300"></canvas>
+    <div id="map-selector">
+        🗺️ Karte:
+        <select id="map-select">
+            <option value="lobby">🏠 Lobby (Startplatz)</option>
+            <option value="square">⬛ Quadrat-Arena</option>
+            <option value="circle">🟡 Runde Arena</option>
+        </select>
+        <button id="change-map-btn">Wechseln</button>
     </div>
     <div id="controls-info">
-        🖱️ WASD → Laufen | Maus → Blick | 🔫 Linksklick / Touch-Feuer | 1/2 Waffe wechseln
+        🖱️ WASD → Laufen | Maus → Blick | 🔫 Linksklick / Touch-Feuer | 1/2 Waffe wechseln | 🔄 Kartenwechsel
     </div>
     <div class="touch-controls">
         <div class="touch-btn" data-action="forward">▲ W</div>
@@ -169,8 +173,8 @@
         <div class="touch-btn weapon-btn" data-action="weapon2">2 🔫🔫</div>
     </div>
     <div id="crosshair"></div>
+    <div id="lobby-message" class="lobby-message" style="display: none;">🏠 LOBBY - Drücke Kartenwechsel um zu kämpfen! 🏠</div>
 
-    <!-- Three.js Bibliothek -->
     <script type="importmap">
         {
             "imports": {
@@ -195,81 +199,184 @@
         renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
         
-        // Beleuchtung
+        // Licht
         const ambientLight = new THREE.AmbientLight(0x404060);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xfff5d1, 1);
         dirLight.position.set(10, 20, 5);
         dirLight.castShadow = true;
-        dirLight.receiveShadow = true;
         scene.add(dirLight);
         const fillLight = new THREE.PointLight(0x5533aa, 0.3);
         fillLight.position.set(0, 5, 0);
         scene.add(fillLight);
         
-        // Boden (Rasen)
-        const groundMat = new THREE.MeshStandardMaterial({ color: 0x3c9e3c, roughness: 0.8 });
-        const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), groundMat);
-        ground.rotation.x = -Math.PI / 2;
-        ground.position.y = -0.1;
-        ground.receiveShadow = true;
-        scene.add(ground);
+        // ----- Karten-Definitionen -----
+        let currentMap = 'lobby';
+        let mapMeshes = [];
         
-        // Gitter für Orientierung
-        const gridHelper = new THREE.GridHelper(60, 20, 0x88aa88, 0x446644);
-        gridHelper.position.y = 0;
-        scene.add(gridHelper);
-        
-        // Map: Wände & Hindernisse (Startplatz markieren)
-        function addWall(x, z, width, depth, color) {
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(width, 2, depth), new THREE.MeshStandardMaterial({ color: color, roughness: 0.4 }));
-            wall.position.set(x, 1, z);
-            wall.castShadow = true;
-            wall.receiveShadow = true;
-            scene.add(wall);
-            return wall;
+        function clearMap() {
+            mapMeshes.forEach(m => scene.remove(m));
+            mapMeshes = [];
         }
-        // Arena Begrenzung + Gebäude
-        addWall(0, -14, 30, 1, 0x8B5A2B);
-        addWall(0, 14, 30, 1, 0x8B5A2B);
-        addWall(-14, 0, 1, 30, 0x8B5A2B);
-        addWall(14, 0, 1, 30, 0x8B5A2B);
-        // Startplatz: eine Plattform mit Holzboden
-        const startPlatform = new THREE.Mesh(new THREE.BoxGeometry(3, 0.3, 3), new THREE.MeshStandardMaterial({ color: 0xCDA87C, roughness: 0.7 }));
-        startPlatform.position.set(0, -0.05, 5);
-        startPlatform.castShadow = true;
-        scene.add(startPlatform);
-        // Markierung mit Bacon-Flagge
-        const flagPole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 1.5, 4), new THREE.MeshStandardMaterial({ color: 0xAA8866 }));
-        flagPole.position.set(0, 0.7, 5);
-        scene.add(flagPole);
         
-        // Dekorative Würfel / Hindernisse
-        const obstacles = [
-            { pos: [-4, 0, -3], size: [2,1,2], color: 0xAA8866 },
-            { pos: [5, 0, -2], size: [1.5,1.5,1.5], color: 0xBC9A6C },
-            { pos: [-3, 0, 6], size: [1,1.5,1], color: 0x8B5A2B },
-            { pos: [6, 0, 3], size: [2,1,2], color: 0xBC9A6C },
-            { pos: [-5, 0, -4], size: [1,2,1], color: 0xAA8866 },
-            { pos: [2, 0, -5], size: [1.5,1,1.5], color: 0xCDA87C }
-        ];
-        obstacles.forEach(obs => {
-            const box = new THREE.Mesh(new THREE.BoxGeometry(obs.size[0], obs.size[1], obs.size[2]), new THREE.MeshStandardMaterial({ color: obs.color, roughness: 0.5 }));
-            box.position.set(obs.pos[0], obs.size[1]/2, obs.pos[2]);
-            box.castShadow = true;
-            box.receiveShadow = true;
-            scene.add(box);
-        });
+        function buildLobby() {
+            // Boden
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x3c9e3c, roughness: 0.8 });
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.1;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            mapMeshes.push(ground);
+            
+            // Begrenzungswände
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B });
+            const walls = [
+                { pos: [0, 1, -15], size: [30, 2, 1] }, { pos: [0, 1, 15], size: [30, 2, 1] },
+                { pos: [-15, 1, 0], size: [1, 2, 30] }, { pos: [15, 1, 0], size: [1, 2, 30] }
+            ];
+            walls.forEach(w => {
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(w.size[0], w.size[1], w.size[2]), wallMat);
+                wall.position.set(w.pos[0], w.pos[1], w.pos[2]);
+                wall.castShadow = true;
+                scene.add(wall);
+                mapMeshes.push(wall);
+            });
+            
+            // Startplatz mit Holzboden und Bacon-Statue
+            const startBase = new THREE.Mesh(new THREE.BoxGeometry(4, 0.3, 4), new THREE.MeshStandardMaterial({ color: 0xCDA87C, roughness: 0.7 }));
+            startBase.position.set(0, -0.1, 0);
+            startBase.castShadow = true;
+            scene.add(startBase);
+            mapMeshes.push(startBase);
+            
+            // Bacon Skin Statue auf Startplatz
+            const baconBody = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.6), new THREE.MeshStandardMaterial({ color: 0xE89F6E }));
+            baconBody.position.set(0, 0.6, 0);
+            baconBody.castShadow = true;
+            scene.add(baconBody);
+            mapMeshes.push(baconBody);
+            
+            const baconHead = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), new THREE.MeshStandardMaterial({ color: 0xE89F6E }));
+            baconHead.position.set(0, 1.2, 0);
+            baconHead.castShadow = true;
+            scene.add(baconHead);
+            mapMeshes.push(baconHead);
+        }
         
-        // ---------- SPIELERSTATS ----------
+        function buildSquareArena() {
+            // Quadratische Arena
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x4a7a4a, roughness: 0.6 });
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.1;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            mapMeshes.push(ground);
+            
+            // Wände mit dekorativen Elementen
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xaa8866 });
+            for (let i = -20; i <= 20; i+=2) {
+                const wallPiece = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), wallMat);
+                wallPiece.position.set(i, 1, -20);
+                wallPiece.castShadow = true;
+                scene.add(wallPiece);
+                mapMeshes.push(wallPiece);
+                
+                const wallPiece2 = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), wallMat);
+                wallPiece2.position.set(i, 1, 20);
+                wallPiece2.castShadow = true;
+                scene.add(wallPiece2);
+                mapMeshes.push(wallPiece2);
+                
+                const wallPiece3 = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), wallMat);
+                wallPiece3.position.set(-20, 1, i);
+                wallPiece3.castShadow = true;
+                scene.add(wallPiece3);
+                mapMeshes.push(wallPiece3);
+                
+                const wallPiece4 = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), wallMat);
+                wallPiece4.position.set(20, 1, i);
+                wallPiece4.castShadow = true;
+                scene.add(wallPiece4);
+                mapMeshes.push(wallPiece4);
+            }
+            
+            // Mittlere Plattform
+            const centerPlat = new THREE.Mesh(new THREE.BoxGeometry(5, 0.5, 5), new THREE.MeshStandardMaterial({ color: 0xccaa77 }));
+            centerPlat.position.set(0, 0, 0);
+            centerPlat.castShadow = true;
+            scene.add(centerPlat);
+            mapMeshes.push(centerPlat);
+        }
+        
+        function buildCircleArena() {
+            // Runde Arena
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x6a5a4a, roughness: 0.7 });
+            const ground = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 0.2, 64), groundMat);
+            ground.position.y = -0.1;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            mapMeshes.push(ground);
+            
+            // Rundumwand
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xaa8866 });
+            for (let i = 0; i < 36; i++) {
+                const angle = (i / 36) * Math.PI * 2;
+                const x = Math.cos(angle) * 18;
+                const z = Math.sin(angle) * 18;
+                const wallPiece = new THREE.Mesh(new THREE.BoxGeometry(1, 2.5, 1), wallMat);
+                wallPiece.position.set(x, 1.2, z);
+                wallPiece.castShadow = true;
+                scene.add(wallPiece);
+                mapMeshes.push(wallPiece);
+            }
+            
+            // Zentrale Plattform
+            const centerPlat = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 0.5, 32), new THREE.MeshStandardMaterial({ color: 0xccaa77 }));
+            centerPlat.position.set(0, 0, 0);
+            centerPlat.castShadow = true;
+            scene.add(centerPlat);
+            mapMeshes.push(centerPlat);
+        }
+        
+        function switchMap(mapType) {
+            clearMap();
+            currentMap = mapType;
+            if (mapType === 'lobby') {
+                buildLobby();
+                document.getElementById('lobby-message').style.display = 'flex';
+                setTimeout(() => {
+                    document.getElementById('lobby-message').style.opacity = '0';
+                    setTimeout(() => document.getElementById('lobby-message').style.display = 'none', 1000);
+                }, 2000);
+                // Respawn in Lobby
+                camera.position.set(0, 1.6, 0);
+            } else if (mapType === 'square') {
+                buildSquareArena();
+                camera.position.set(0, 1.6, 0);
+            } else if (mapType === 'circle') {
+                buildCircleArena();
+                camera.position.set(0, 1.6, 0);
+            }
+            // Gegner respawnen auf neuer Karte
+            respawnEnemies();
+            // Münzen und Keys verteilen
+            spawnCollectibles();
+        }
+        
+        // ----- Spielerstatistiken -----
         let health = 100;
         let coins = 0;
-        let currentWeapon = 0; // 0 = Pistole, 1 = Schrotflinte
+        let keys = 0;
+        let currentWeapon = 0;
         const weapons = [
-            { name: "Pistole", damage: 25, cooldown: 350, spread: 0.02, ammo: -1 }, // unendlich
+            { name: "Pistole", damage: 25, cooldown: 350, spread: 0.02, ammo: -1 },
             { name: "Schrotflinte", damage: 45, cooldown: 800, spread: 0.08, ammo: -1 }
         ];
         let canShoot = true;
+        
+        // Bewegung
         let moveForward = false, moveBack = false, moveLeft = false, moveRight = false;
         let velocity = new THREE.Vector3(0, 0, 0);
         let isGrounded = true;
@@ -277,7 +384,7 @@
         const JUMP_POWER = 5.0;
         const GRAVITY = 15;
         
-        // Maussteuerung
+        // Maus
         let mouseX = 0, mouseY = 0;
         let pitch = 0, yaw = -Math.PI/2;
         document.addEventListener('mousemove', (e) => {
@@ -292,7 +399,6 @@
             }
         });
         
-        // Klick sperren für FPS
         renderer.domElement.addEventListener('click', () => {
             renderer.domElement.requestPointerLock();
         });
@@ -307,7 +413,6 @@
                 case 'Space': if(isGrounded) { velocity.y = JUMP_POWER; isGrounded = false; } break;
                 case 'Digit1': currentWeapon = 0; updateWeaponUI(); break;
                 case 'Digit2': currentWeapon = 1; updateWeaponUI(); break;
-                case 'KeyR': break;
             }
         });
         window.addEventListener('keyup', (e) => {
@@ -319,23 +424,20 @@
             }
         });
         
-        // Schießen (Raycast)
+        // Schießen
         function shoot() {
             if (!canShoot) return;
             const weapon = weapons[currentWeapon];
             canShoot = false;
             setTimeout(() => { canShoot = true; }, weapon.cooldown);
             
-            // Mündungsflash Effekt (kurzer weißer Blitz)
+            // Mündungsflash
             const flash = new THREE.PointLight(0xffaa66, 1, 8);
             flash.position.set(camera.position.x, camera.position.y - 0.2, camera.position.z);
             camera.add(flash);
             setTimeout(() => camera.remove(flash), 70);
             
-            // Raycast von Kamera
             const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-            // Streuung
             const spreadX = (Math.random() - 0.5) * weapon.spread;
             const spreadY = (Math.random() - 0.5) * weapon.spread;
             const direction = camera.getWorldDirection(new THREE.Vector3());
@@ -350,14 +452,16 @@
                 enemy.userData.health -= weapon.damage;
                 createHitEffect(enemy.position);
                 if (enemy.userData.health <= 0) {
-                    // Gegner stirbt
                     const idx = enemies.indexOf(enemy);
                     if (idx !== -1) enemies.splice(idx,1);
                     scene.remove(enemy);
-                    // Münze droppen
-                    spawnCoin(enemy.position);
-                    // Spawn neuer Gegner nach kurzer Zeit
-                    setTimeout(() => { spawnRandomEnemy(); }, 2000);
+                    // Chance auf Key oder Coins
+                    if (Math.random() < 0.3) {
+                        spawnKey(enemy.position);
+                    } else {
+                        spawnCoin(enemy.position);
+                    }
+                    setTimeout(() => spawnRandomEnemy(), 2000);
                 }
             }
         }
@@ -371,8 +475,10 @@
             setTimeout(() => scene.remove(spark), 150);
         }
         
-        // Münzen
+        // Sammelobjekte
         const coinsList = [];
+        const keysList = [];
+        
         function spawnCoin(position) {
             const coinGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.08, 16);
             const coinMat = new THREE.MeshStandardMaterial({ color: 0xffcc44, metalness: 0.8, emissive: 0x442200 });
@@ -384,11 +490,45 @@
             coinsList.push(coin);
         }
         
+        function spawnKey(position) {
+            const keyGeo = new THREE.BoxGeometry(0.3, 0.1, 0.6);
+            const keyMat = new THREE.MeshStandardMaterial({ color: 0xffaa44, metalness: 0.9 });
+            const key = new THREE.Mesh(keyGeo, keyMat);
+            key.position.copy(position);
+            key.position.y += 0.3;
+            scene.add(key);
+            keysList.push(key);
+        }
+        
         function updateCoinsUI() {
             document.getElementById('coins-val').innerText = coins;
         }
         
-        // Gegner System
+        function updateKeysUI() {
+            document.getElementById('keys-val').innerText = keys;
+        }
+        
+        function spawnCollectibles() {
+            // Bestehende löschen
+            coinsList.forEach(c => scene.remove(c));
+            keysList.forEach(k => scene.remove(k));
+            coinsList.length = 0;
+            keysList.length = 0;
+            
+            // Neue spawnen
+            for (let i = 0; i < 8; i++) {
+                const x = (Math.random() - 0.5) * 24;
+                const z = (Math.random() - 0.5) * 24;
+                spawnCoin(new THREE.Vector3(x, 0, z));
+            }
+            for (let i = 0; i < 3; i++) {
+                const x = (Math.random() - 0.5) * 24;
+                const z = (Math.random() - 0.5) * 24;
+                spawnKey(new THREE.Vector3(x, 0, z));
+            }
+        }
+        
+        // Gegner
         const enemies = [];
         function createEnemy(x, z) {
             const geo = new THREE.BoxGeometry(0.8, 1.2, 0.8);
@@ -403,91 +543,35 @@
         }
         
         function spawnRandomEnemy() {
-            let x = (Math.random() - 0.5) * 20;
-            let z = (Math.random() - 0.5) * 18;
-            x = Math.max(-12, Math.min(12, x));
-            z = Math.max(-12, Math.min(12, z));
-            // nicht auf Startplatz spawnen
-            if (Math.hypot(x, z-5) < 2.5) x += 3;
+            let x = (Math.random() - 0.5) * 28;
+            let z = (Math.random() - 0.5) * 28;
+            x = Math.max(-14, Math.min(14, x));
+            z = Math.max(-14, Math.min(14, z));
             createEnemy(x, z);
         }
         
-        // Initial 4 Gegner
-        for(let i=0; i<4; i++) spawnRandomEnemy();
-        // Startmünzen
-        for(let i=0;i<3;i++) spawnCoin(new THREE.Vector3((Math.random()-0.5)*8, 0, (Math.random()-0.5)*6 + 2));
-        
-        // Bacon Skin: Player-Symbol auf Minimap & Bacon-Modell als "Spirit" (First-Person selber nicht sichtbar)
-        // Ein Bacon-Kopf schwebt über der Startplattform als Dekoration
-        const baconMat = new THREE.MeshStandardMaterial({ color: 0xE89F6E, roughness: 0.3 });
-        const baconHead = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), baconMat);
-        baconHead.position.set(0, 0.9, 5.2);
-        scene.add(baconHead);
-        const baconEarL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.2), new THREE.MeshStandardMaterial({ color: 0xC27040 }));
-        baconEarL.position.set(-0.4, 0.2, 0.3);
-        baconHead.add(baconEarL);
-        const baconEarR = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.2), new THREE.MeshStandardMaterial({ color: 0xC27040 }));
-        baconEarR.position.set(0.4, 0.2, 0.3);
-        baconHead.add(baconEarR);
-        
-        // Minimap Zeichnung
-        const minimapCanvas = document.getElementById('minimapCanvas');
-        const ctx = minimapCanvas.getContext('2d');
-        function updateMinimap() {
-            const size = 300;
-            ctx.fillStyle = "#1a2a1a";
-            ctx.fillRect(0, 0, size, size);
-            // Welt 30x30 auf 300px
-            const scale = size / 30;
-            // Hindernisse (Wände)
-            ctx.fillStyle = "#8B5A2B";
-            [[0,-14,30,1],[0,14,30,1],[-14,0,1,30],[14,0,1,30]].forEach(w => {
-                let x = (w[0] - 15) * scale;
-                let y = (w[1] + 15) * scale;
-                let ww = w[2]*scale, hh = w[3]*scale;
-                ctx.fillRect(x, y-hh, ww, hh);
-            });
-            ctx.fillStyle = "#CDA87C";
-            ctx.fillRect((-1.5+15)*scale, (5+1.5-15)*scale, 3*scale, 3*scale);
-            // Gegner (rot)
-            enemies.forEach(e => {
-                ctx.fillStyle = "#ff3333";
-                let x = (e.position.x + 15) * scale;
-                let y = (e.position.z + 15) * scale;
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, 2*Math.PI);
-                ctx.fill();
-            });
-            // Münzen (gelb)
-            coinsList.forEach(c => {
-                ctx.fillStyle = "#ffcc44";
-                let x = (c.position.x + 15) * scale;
-                let y = (c.position.z + 15) * scale;
-                ctx.fillRect(x-2, y-2, 4, 4);
-            });
-            // Spieler (Bacon)
-            ctx.fillStyle = "#E89F6E";
-            let px = (camera.position.x + 15) * scale;
-            let py = (camera.position.z + 15) * scale;
-            ctx.beginPath();
-            ctx.arc(px, py, 5, 0, 2*Math.PI);
-            ctx.fill();
-            ctx.fillStyle = "#553322";
-            ctx.fillRect(px-3, py-2, 6, 3);
+        function respawnEnemies() {
+            enemies.forEach(e => scene.remove(e));
+            enemies.length = 0;
+            for(let i=0; i<5; i++) spawnRandomEnemy();
         }
         
-        // UI
+        // Initiale Gegner
+        for(let i=0; i<5; i++) spawnRandomEnemy();
+        spawnCollectibles();
+        
+        // UI Updates
         function updateWeaponUI() {
             document.getElementById('weapon-name').innerText = weapons[currentWeapon].name;
-            document.getElementById('ammo-count').innerText = "∞";
         }
+        
         function updateHealthUI() {
             document.getElementById('health-val').innerText = health;
             const percent = Math.max(0, health);
             document.getElementById('health-fill').style.width = percent + '%';
         }
         
-        // Bewegungslogik & Kollision
+        // Bewegung & Kollision
         function updateMovement(deltaTime) {
             const actualSpeed = WALK_SPEED * deltaTime;
             const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
@@ -501,14 +585,15 @@
             let deltaPos = new THREE.Vector3(0,0,0);
             deltaPos.addScaledVector(forward, move.z * actualSpeed);
             deltaPos.addScaledVector(right, move.x * actualSpeed);
-            // einfache Kollision mit Begrenzung & Hindernissen
+            
             let newX = camera.position.x + deltaPos.x;
             let newZ = camera.position.z + deltaPos.z;
-            if(Math.abs(newX) < 13.5 && Math.abs(newZ) < 13.5) {
+            let boundary = (currentMap === 'square') ? 18 : (currentMap === 'circle') ? 16 : 14;
+            if(Math.abs(newX) < boundary && Math.abs(newZ) < boundary) {
                 camera.position.x = newX;
                 camera.position.z = newZ;
             }
-            // Gravitation & Sprung
+            
             velocity.y -= GRAVITY * deltaTime;
             camera.position.y += velocity.y * deltaTime;
             if(camera.position.y <= 1.6) {
@@ -518,12 +603,11 @@
             } else isGrounded = false;
         }
         
-        // Münzen sammeln
-        function collectCoins() {
+        // Sammeln
+        function collectItems() {
             for(let i=0; i<coinsList.length; i++) {
                 const coin = coinsList[i];
-                const dist = camera.position.distanceTo(coin.position);
-                if(dist < 1.2) {
+                if(camera.position.distanceTo(coin.position) < 1.2) {
                     scene.remove(coin);
                     coinsList.splice(i,1);
                     coins += 10;
@@ -531,21 +615,29 @@
                     i--;
                 }
             }
+            for(let i=0; i<keysList.length; i++) {
+                const key = keysList[i];
+                if(camera.position.distanceTo(key.position) < 1.2) {
+                    scene.remove(key);
+                    keysList.splice(i,1);
+                    keys += 1;
+                    updateKeysUI();
+                    i--;
+                }
+            }
         }
         
-        // Gegner berührung Schaden
+        // Gegner Schaden
         function enemyDamage() {
             for(let i=0; i<enemies.length; i++) {
                 const enemy = enemies[i];
-                const dist = camera.position.distanceTo(enemy.position);
-                if(dist < 1.4 && health > 0) {
+                if(camera.position.distanceTo(enemy.position) < 1.4 && health > 0) {
                     health -= 15;
                     updateHealthUI();
                     if(health <= 0) {
-                        alert("Du wurdest besiegt! Spiel wird neugestartet.");
+                        alert("Du wurdest besiegt! Zurück zur Lobby.");
                         resetGame();
                     }
-                    // Rückstoß
                     const dir = new THREE.Vector3().subVectors(camera.position, enemy.position).normalize();
                     camera.position.x += dir.x * 1.2;
                     camera.position.z += dir.z * 1.2;
@@ -557,18 +649,16 @@
         function resetGame() {
             health = 100;
             coins = 0;
+            keys = 0;
             updateHealthUI();
             updateCoinsUI();
-            camera.position.set(0, 1.6, 5);
-            velocity.set(0,0,0);
-            // Gegner neu
-            while(enemies.length) scene.remove(enemies.pop());
-            for(let i=0;i<4;i++) spawnRandomEnemy();
-            while(coinsList.length) scene.remove(coinsList.pop());
-            for(let i=0;i<3;i++) spawnCoin(new THREE.Vector3((Math.random()-0.5)*8, 0, (Math.random()-0.5)*6 + 2));
+            updateKeysUI();
+            switchMap('lobby');
+            respawnEnemies();
+            spawnCollectibles();
         }
         
-        // MOBILE TOUCH BUTTONS
+        // Mobile Touch
         const touchBtns = document.querySelectorAll('.touch-btn');
         touchBtns.forEach(btn => {
             btn.addEventListener('touchstart', (e) => {
@@ -584,12 +674,13 @@
             });
             btn.addEventListener('touchend', (e) => {
                 const action = btn.dataset.action;
-                if(action === 'forward') moveForward = false;
-                if(action === 'back') moveBack = false;
-                if(action === 'left') moveLeft = false;
-                if(action === 'right') moveRight = false;
+                if(['forward','back','left','right'].includes(action)) {
+                    if(action === 'forward') moveForward = false;
+                    if(action === 'back') moveBack = false;
+                    if(action === 'left') moveLeft = false;
+                    if(action === 'right') moveRight = false;
+                }
             });
-            // Maus-Unterstützung für Mobile Sim
             btn.addEventListener('mousedown', (e) => {
                 const action = btn.dataset.action;
                 if(action === 'forward') moveForward = true;
@@ -611,11 +702,17 @@
             });
         });
         
-        // Schießen mit Maus / Touch
         window.addEventListener('click', (e) => {
             if(document.pointerLockElement === renderer.domElement) shoot();
         });
         
+        // Kartenwechsel Event
+        document.getElementById('change-map-btn').addEventListener('click', () => {
+            const selected = document.getElementById('map-select').value;
+            switchMap(selected);
+        });
+        
+        // Animation Loop
         let lastTime = performance.now();
         function animate() {
             const now = performance.now();
@@ -623,31 +720,31 @@
             lastTime = now;
             
             updateMovement(delta);
-            collectCoins();
+            collectItems();
             enemyDamage();
-            updateMinimap();
             
-            // einfache rotierende Münzen
+            // Rotationen für Münzen und Keys
             coinsList.forEach(coin => coin.rotation.z += 0.03);
+            keysList.forEach(key => key.rotation.y += 0.02);
             
             renderer.render(scene, camera);
             requestAnimationFrame(animate);
         }
         
+        // Starte mit Lobby
+        buildLobby();
         updateWeaponUI();
         updateHealthUI();
         updateCoinsUI();
-        camera.position.set(0, 1.6, 5);
+        updateKeysUI();
+        camera.position.set(0, 1.6, 0);
         animate();
         
-        // Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-        
-        console.log("Spiel gestartet – Rivals Style FPS mit Bacon, Münzen, Map, Mobile-Buttons!");
     </script>
 </body>
 </html>
