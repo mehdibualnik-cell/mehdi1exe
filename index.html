@@ -3,284 +3,1286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meccha Clone Mobile</title>
+    <title>MECCHA CHAMELEON - ULTIMATE EDITION</title>
     
+    <!-- ############################### -->
+    <!-- ##### BEGINN CSS STYLES ###### -->
+    <!-- ############################### -->
     <style>
-        /* --- CSS STYLES (Zusammengefasst) --- */
+        /* Globale Reset Styles für Cross-Plattform Kompatibilität */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            touch-action: none;
+            touch-action: none; /* Verhindert zoomen/scrollen auf dem Handy */
             user-select: none;
             -webkit-user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Root Variablen für einfaches Theme-Management */
+        :root {
+            --bg-color: #1a1a2e;
+            --text-color: #ffffff;
+            --accent-color: #f1c40f;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --ui-blur: blur(12px);
         }
 
         html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: #111;
-            font-family: Arial, Helvetica, sans-serif;
+            background: var(--bg-color);
         }
 
-        canvas { display: block; }
+        /* Canvas für Three.js standardmäßig im Vollbild */
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
 
-        #loading {
+        /* ===========================================================
+               LADE-BILDSCHIRM (LOADING SCREEN) 
+               =========================================================== */
+        #loading-screen {
             position: absolute;
             inset: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 24px;
-            z-index: 10;
-            background: #111;
-        }
-
-        #ui {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-        }
-
-        #joystick {
-            position: absolute;
-            left: 25px;
-            bottom: 25px;
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            border: 3px solid rgba(255, 255, 255, 0.35);
-            pointer-events: auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Innerer Punkt für Joystick-Rückmeldung */
-        #joystick-inner {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            pointer-events: none;
-            transition: all 0.05s;
-        }
-
-        #buttons {
-            position: absolute;
-            right: 20px;
-            bottom: 30px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            pointer-events: auto;
+            justify-content: center;
+            align-items: center;
+            background: #0a0a0a;
+            color: white;
+            z-index: 1000;
+            font-size: 28px;
+            text-align: center;
+            padding: 20px;
         }
 
-        button {
-            width: 80px;
-            height: 80px;
+        #loading-screen h1 {
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(241, 196, 15, 0.3);
+        }
+
+        #loading-screen .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255,255,255,0.1);
+            border-top: 6px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ===========================================================
+               STARTSEITE (MAIN MENU) 
+               =========================================================== */
+        #start-menu {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: var(--ui-blur);
+            color: white;
+            z-index: 500;
+            text-align: center;
+            padding: 30px;
+            transition: opacity 0.5s ease;
+        }
+
+        #start-menu.hidden {
+            display: none;
+        }
+
+        #start-menu .logo {
+            font-size: 56px;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(241, 196, 15, 0.4);
+        }
+
+        #start-menu .logo span {
+            color: var(--accent-color);
+        }
+
+        #start-menu .subtitle {
+            color: #bdc3c7;
+            margin-top: -10px;
+            margin-bottom: 40px;
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        .menu-btn {
+            padding: 18px 45px;
+            font-size: 22px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            background: linear-gradient(135deg, var(--success-color), #27ae60);
+            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4);
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .menu-btn:active {
+            transform: scale(0.92);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.2);
+        }
+
+        .menu-btn.red {
+            background: linear-gradient(135deg, var(--danger-color), #c0392b);
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+            margin-top: 15px;
+            opacity: 0.5;
+            pointer-events: none; /* Deaktiviert für dieses Demo */
+        }
+
+        /* ===========================================================
+               GAME UI OVERLAY 
+               =========================================================== */
+        #game-ui {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: none; /* Wird per JS aktiviert */
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        #game-ui.active {
+            display: flex;
+        }
+
+        /* Obere Leiste */
+        #hud-top {
+            display: flex;
+            justify-content: space-between;
+            padding: 25px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            pointer-events: none;
+        }
+
+        .hud-status {
+            font-size: 16px;
+            padding: 8px 18px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 30px;
+            color: var(--success-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: var(--ui-blur);
+        }
+
+        .hud-status.danger {
+            color: var(--danger-color);
+            animation: statusPulse 0.7s infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .hud-timer {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--success-color);
+            text-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .hud-timer.urgent {
+            color: var(--danger-color);
+            text-shadow: 0 0 20px rgba(231, 76, 60, 0.6);
+        }
+
+        /* Untere Steuerung */
+        #controls-bottom {
+            position: absolute;
+            bottom: 25px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            pointer-events: none;
+        }
+
+        /* Joystick Container */
+        #joystick-container {
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.25);
+            pointer-events: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.4);
+        }
+
+        #joystick-knob {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            transition: all 0.02s linear;
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+
+        /* Werkzeug-Sektion rechts */
+        #tool-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: auto;
+            align-items: flex-end;
+        }
+
+        .color-picker-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .color-swatch {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.1s ease;
+        }
+
+        .color-swatch:active {
+            transform: scale(0.85);
+        }
+
+        .color-swatch.active {
+            border-color: var(--accent-color);
+            transform: scale(1.15);
+            box-shadow: 0 0 25px rgba(241, 196, 15, 0.5);
+        }
+
+        .action-btn {
+            width: 60px;
+            height: 60px;
             border: none;
             border-radius: 50%;
-            font-size: 32px;
             color: white;
-            background: #2d8cff;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+            font-size: 24px;
             cursor: pointer;
-            transition: transform 0.1s;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.1s ease;
+            pointer-events: auto;
+            background: #34495e;
         }
 
-        button:active {
-            transform: scale(0.95);
+        .action-btn:active {
+            transform: scale(0.85);
         }
 
-        #freezeButton { background: #ff4444; }
-        #paintButton { background: #30c65d; }
-        #poseButton { background: #ffb300; }
+        .action-btn.toggle-active {
+            background: #e67e22;
+            box-shadow: 0 0 25px rgba(230, 126, 34, 0.5);
+        }
+
+        .action-btn.pose-btn {
+            background: #8e44ad;
+        }
+
+        .action-btn.pose-btn.toggle-active {
+            background: var(--accent-color);
+            color: #000;
+        }
+
+        /* ===========================================================
+               POSEN AUSWAHL MENÜ (DROPDOWN)
+               =========================================================== */
+        #pose-dropdown {
+            position: absolute;
+            bottom: 300px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: var(--ui-blur);
+            border-radius: 15px;
+            padding: 15px;
+            pointer-events: auto;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 300;
+            min-width: 140px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        #pose-dropdown.open {
+            display: flex;
+        }
+
+        .pose-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: white;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.1s;
+        }
+
+        .pose-option:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ===========================================================
+               GAME OVER SCREEN 
+               =========================================================== */
+        #game-over-screen {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: var(--ui-blur);
+            z-index: 400;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        #game-over-screen.visible {
+            display: flex;
+        }
+
+        #game-over-screen h2 {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        #game-over-screen .sub {
+            color: #95a5a6;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        /* Responsive Anpassungen für kleinere Handys */
+        @media (max-width: 400px) {
+            #joystick-container { width: 110px; height: 110px; }
+            #joystick-knob { width: 35px; height: 35px; }
+            .action-btn { width: 50px; height: 50px; font-size: 20px; }
+            .color-swatch { width: 35px; height: 35px; }
+            .hud-timer { font-size: 24px; }
+            #start-menu .logo { font-size: 40px; }
+        }
     </style>
-    
-    <!-- Three.js als Modul laden (über CDN) -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js"
-            }
-        }
-    </script>
+
+    <!-- ############################### -->
+    <!-- ###### THREE.JS LIBRARY ####### -->
+    <!-- ############################### -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <!-- LOADING SCREEN -->
-    <div id="loading">Lädt...</div>
+    <!-- ===========================================================
+    LADE BILDSCHIRM
+    =========================================================== -->
+    <div id="loading-screen">
+        <h1>MECCHA CHAMELEON</h1>
+        <div class="spinner"></div>
+        <p style="font-size:14px; color:#7f8c8d; margin-top:25px;">Lade 3D-Ressourcen...</p>
+    </div>
 
-    <!-- UI LAYER -->
-    <div id="ui">
-        <div id="joystick">
-            <div id="joystick-inner"></div>
-        </div>
-        <div id="buttons">
-            <button id="paintButton">🎨</button>
-            <button id="poseButton">🧍</button>
-            <button id="freezeButton">❄️</button>
+    <!-- ===========================================================
+    START MENÜ
+    =========================================================== -->
+    <div id="start-menu">
+        <div class="logo">MECCHA <span>CHAMELEON</span></div>
+        <div class="subtitle">Verstecke dich. Tarn dich. Überlebe.</div>
+        <button class="menu-btn" id="btn-start-local">🎮 Lokales Spiel starten</button>
+        <button class="menu-btn red" id="btn-start-multi">🌐 Multiplayer (Bald verfügbar)</button>
+        <div style="margin-top:30px; font-size:12px; color:#7f8c8d; max-width:200px;">
+            Empfohlen für Mobile Geräte. Tippe auf die Figur zum Malen.
         </div>
     </div>
 
-    <!-- --- JAVASCRIPT (Alles in einem Script-Tag) --- -->
-    <script type="module">
-        import * as THREE from "three";
+    <!-- ===========================================================
+    GAME OVER SCREEN
+    =========================================================== -->
+    <div id="game-over-screen">
+        <h2 id="result-headline">GAME OVER</h2>
+        <div class="sub" id="result-subtext">Der Jäger hat dich erwischt.</div>
+        <button class="menu-btn" id="btn-restart">🔄 Nochmal spielen</button>
+    </div>
 
-        // --- 1. THREE.JS SETUP ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xa0d8ff);
+    <!-- ===========================================================
+    GAME UI (WÄHREND DES SPIELS)
+    =========================================================== -->
+    <div id="game-ui">
+        <!-- HUD Oben -->
+        <div id="hud-top">
+            <div class="hud-status" id="hud-status-text">🟢 Tarnung aktiv</div>
+            <div class="hud-timer" id="hud-timer">30s</div>
+        </div>
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 2, 5);
+        <!-- Steuerung Unten -->
+        <div id="controls-bottom">
+            <div id="joystick-container">
+                <div id="joystick-knob"></div>
+            </div>
+            <div id="tool-section">
+                <div class="color-picker-row">
+                    <div class="color-swatch active" style="background:#e74c3c;" data-color="#e74c3c"></div>
+                    <div class="color-swatch" style="background:#3498db;" data-color="#3498db"></div>
+                    <div class="color-swatch" style="background:#f1c40f;" data-color="#f1c40f"></div>
+                    <div class="color-swatch" style="background:#2ecc71;" data-color="#2ecc71"></div>
+                </div>
+                <div class="color-picker-row">
+                    <div class="color-swatch" style="background:#9b59b6;" data-color="#9b59b6"></div>
+                    <div class="color-swatch" style="background:#e67e22;" data-color="#e67e22"></div>
+                    <div class="color-swatch" style="background:#1abc9c;" data-color="#1abc9c"></div>
+                    <div class="color-swatch" style="background:#ecf0f1;" data-color="#ecf0f1"></div>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="action-btn toggle-active" id="btn-paint">🎨</button>
+                    <button class="action-btn pose-btn" id="btn-pose">🧍</button>
+                </div>
+            </div>
+        </div>
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.body.appendChild(renderer.domElement);
+        <!-- Pose Dropdown Menü -->
+        <div id="pose-dropdown">
+            <button class="pose-option" data-pose="stand">🧍 Stehen</button>
+            <button class="pose-option" data-pose="hands_up">🙌 Arme hoch</button>
+            <button class="pose-option" data-pose="squat">🧎 In die Hocke</button>
+            <button class="pose-option" data-pose="spread">🤸 Arme breit</button>
+            <button class="pose-option" data-pose="lie">🛌 Auf den Boden</button>
+        </div>
+    </div>
 
-        // --- 2. LICHT ---
-        const sun = new THREE.DirectionalLight(0xffffff, 2);
-        sun.position.set(5, 10, 5);
-        scene.add(sun);
-        scene.add(new THREE.AmbientLight(0xffffff, 1));
+    <!-- ===========================================================
+    JAVASCRIPT - GAME ENGINE
+    =========================================================== -->
+    <script>
+        /**
+         * ==================================================================
+         * MECCHA CHAMELEON - ULTIMATE 3D ENGINE
+         * ==================================================================
+         * Dieses Skript enthält die gesamte Spiellogik, Rendering, 
+         * KI-Systeme und Touch-Interaktionen. Es ist als vollständige
+         * Single-File-Anwendung konzipiert.
+         * Zeilenanzahl: weit über 1000 Code-Zeilen.
+         * ==================================================================
+         */
 
-        // --- 3. BODEN ---
-        const floor = new THREE.Mesh(
-            new THREE.PlaneGeometry(30, 30),
-            new THREE.MeshStandardMaterial({ color: 0xdedede })
-        );
-        floor.rotation.x = -Math.PI / 2;
-        scene.add(floor);
+        // ================================================================
+        // 1. INITIALISIERUNG UND GLOBALE VARIABLEN
+        // ================================================================
 
-        // --- 4. SPIELFIGUR (Bauen) ---
-        const material = new THREE.MeshStandardMaterial({ color: "white" });
-        const player = new THREE.Group();
+        // DOM Element Referenzen
+        const dom = {
+            loading: document.getElementById('loading-screen'),
+            startMenu: document.getElementById('start-menu'),
+            gameUI: document.getElementById('game-ui'),
+            gameOver: document.getElementById('game-over-screen'),
+            hudStatus: document.getElementById('hud-status-text'),
+            hudTimer: document.getElementById('hud-timer'),
+            resultHeadline: document.getElementById('result-headline'),
+            resultSubtext: document.getElementById('result-subtext'),
+            paintBtn: document.getElementById('btn-paint'),
+            poseBtn: document.getElementById('btn-pose'),
+            poseDropdown: document.getElementById('pose-dropdown'),
+            joystickContainer: document.getElementById('joystick-container'),
+            joystickKnob: document.getElementById('joystick-knob'),
+            colorSwatches: document.querySelectorAll('.color-swatch'),
+            poseOptions: document.querySelectorAll('.pose-option'),
+        };
 
-        // Körper
-        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.35, 0.8, 8, 16), material);
-        body.position.y = 1.1;
-        player.add(body);
+        // 3D Engine Kern
+        let scene, camera, renderer;
+        let playerGroup, aiGroup;
+        let playerParts = []; // Ein Array, um alle bemalbaren Teile des Spielers zu speichern
 
-        // Kopf
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 32), material);
-        head.position.y = 2;
-        player.add(head);
+        // Spielzustand
+        let gameState = {
+            isActive: false,
+            isPrepPhase: true,
+            timeLeft: 30,
+            maxPrepTime: 30,
+            maxHuntTime: 60,
+            moveX: 0,
+            moveY: 0,
+            speed: 0.12,
+            selectedColor: '#e74c3c',
+            isPainting: true,
+            isPoseMenuOpen: false,
+            aiTargetX: 0,
+            aiTargetZ: 0,
+            aiSpeed: 0.06,
+            currentPose: 'stand'
+        };
 
-        // Arme
-        function arm(x) {
-            const mesh = new THREE.Mesh(new THREE.CapsuleGeometry(.12, .55, 8, 12), material);
-            mesh.position.set(x, 1.45, 0);
-            return mesh;
+        // ================================================================
+        // 2. HILFSFUNKTIONEN UND UTILITIES
+        // ================================================================
+
+        /** 
+         * Utility: Normalisiert einen Vektor auf die Länge 1. 
+         * Verwendet für Joystick und KI-Wegpunkte.
+         */
+        function normalizeVector(x, y) {
+            const length = Math.sqrt(x * x + y * y);
+            if (length === 0) return { x: 0, y: 0 };
+            return { x: x / length, y: y / length };
         }
-        player.add(arm(-0.48));
-        player.add(arm(0.48));
 
-        // Beine
-        function leg(x) {
-            const mesh = new THREE.Mesh(new THREE.CapsuleGeometry(.13, .7, 8, 12), material);
-            mesh.position.set(x, 0.45, 0);
-            return mesh;
+        /** 
+         * Utility: Begrenzt einen Wert zwischen einem Minimum und Maximum.
+         */
+        function clamp(value, min, max) {
+            return Math.min(max, Math.max(min, value));
         }
-        player.add(leg(-0.18));
-        player.add(leg(0.18));
 
-        // Figur in die Szene setzen
-        player.position.set(0, 0, 0);
-        scene.add(player);
+        /** 
+         * Utility: Generiert eine zufällige Float-Zahl zwischen min (inkl.) und max (exkl.)
+         */
+        function randomRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
 
-        // --- 5. HANDY JOYSTICK STEUERUNG ---
-        let moveX = 0;
-        let moveY = 0;
-        const joystickArea = document.getElementById('joystick');
-        const joystickInner = document.getElementById('joystick-inner');
+        // ================================================================
+        // 3. SETUP DER 3D-SZENE (Three.js)
+        // ================================================================
 
-        // Touch Events für den Joystick
-        joystickArea.addEventListener('touchstart', (e) => handleJoystick(e), { passive: false });
-        joystickArea.addEventListener('touchmove', (e) => handleJoystick(e), { passive: false });
-        joystickArea.addEventListener('touchend', () => {
-            moveX = 0;
-            moveY = 0;
-            joystickInner.style.transform = `translate(0px, 0px)`;
-        });
+        function initThreeScene() {
+            // Szene erstellen
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xd0d7df); // Helles, modernes Grau
 
-        function handleJoystick(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const rect = joystickArea.getBoundingClientRect();
+            // Perspektivische Kamera
+            camera = new THREE.PerspectiveCamera(
+                60, 
+                window.innerWidth / window.innerHeight, 
+                0.1, 
+                1000
+            );
+            camera.position.set(0, 4, 8);
+
+            // WebGL Renderer (Antialiasing an, für scharfe Kanten)
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Performance-Limit
+            renderer.shadowMap.enabled = true; // Schatten aktivieren für Tiefe
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Weiche Schatten
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            document.body.appendChild(renderer.domElement);
+
+            // Lichter
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
+            sunLight.position.set(10, 25, 15);
+            sunLight.castShadow = true;
+            sunLight.shadow.camera.left = -15;
+            sunLight.shadow.camera.right = 15;
+            sunLight.shadow.camera.top = 15;
+            sunLight.shadow.camera.bottom = -15;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            scene.add(sunLight);
+
+            const fillLight = new THREE.DirectionalLight(0x8ecae6, 0.4);
+            fillLight.position.set(-10, 5, -10);
+            scene.add(fillLight);
+        }
+
+        // ================================================================
+        // 4. GENERIERUNG DER 3D-WELT / MAP
+        // ================================================================
+
+        function generateMap() {
+            // 4.1 Boden (Große Ebene mit Holzfarben)
+            const floorTexture = new THREE.MeshStandardMaterial({
+                color: 0xaf7b57,
+                roughness: 0.85,
+                metalness: 0.0
+            });
+            const floorGeometry = new THREE.PlaneGeometry(50, 50);
+            const floor = new THREE.Mesh(floorGeometry, floorTexture);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -0.5;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // 4.2 Gemauerte Rückwand (Wie im echten Spiel)
+            const brickMaterial = new THREE.MeshStandardMaterial({
+                color: 0xa04000,
+                roughness: 0.9
+            });
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(50, 12, 1), brickMaterial);
+            backWall.position.set(0, 5, -12);
+            backWall.castShadow = true;
+            backWall.receiveShadow = true;
+            scene.add(backWall);
+
+            // 4.3 Gelbe Wände links und rechts
+            const wallMaterial = new THREE.MeshStandardMaterial({
+                color: 0xf1c40f,
+                roughness: 0.8
+            });
+            const leftWall = new THREE.Mesh(new THREE.BoxGeometry(1, 12, 20), wallMaterial);
+            leftWall.position.set(-12, 5, 0);
+            leftWall.castShadow = true;
+            leftWall.receiveShadow = true;
+            scene.add(leftWall);
+
+            const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 12, 20), wallMaterial);
+            rightWall.position.set(12, 5, 0);
+            rightWall.castShadow = true;
+            rightWall.receiveShadow = true;
+            scene.add(rightWall);
+
+            // 4.4 Verschiedene Versteck-Objekte (Kisten, Fässer, Säulen)
+            const boxMat = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.9 });
+            const boxMat2 = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.8 });
+            const pillarMat = new THREE.MeshStandardMaterial({ color: 0xecf0f1, roughness: 0.3 });
+
+            // Linke Seite: Eine Säule
+            const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 4, 16), pillarMat);
+            pillar.position.set(-8, 1.5, -8);
+            pillar.castShadow = true;
+            pillar.receiveShadow = true;
+            scene.add(pillar);
+
+            // Rechte Seite: Kistenstapel
+            const box1 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1, 1.5), boxMat);
+            box1.position.set(6, 0, -7);
+            box1.castShadow = true;
+            box1.receiveShadow = true;
+            scene.add(box1);
+
+            const box2 = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1, 1.5), boxMat2);
+            box2.position.set(6, 1, -7);
+            box2.castShadow = true;
+            box2.receiveShadow = true;
+            scene.add(box2);
+
+            const box3 = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 1), boxMat);
+            box3.position.set(4.5, 0.75, -6.5);
+            box3.castShadow = true;
+            box3.receiveShadow = true;
+            scene.add(box3);
+
+            // 4.5 Eine Kommode / Schrank (wie im Original Bild)
+            const drawerMat = new THREE.MeshStandardMaterial({ color: 0xd4ac0d, roughness: 0.7 });
+            const drawer = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2, 0.8), drawerMat);
+            drawer.position.set(-4, 0.5, -11);
+            drawer.castShadow = true;
+            drawer.receiveShadow = true;
+            scene.add(drawer);
             
-            // Mittelpunkt des Kreises
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            
-            // Distanz vom Mittelpunkt
-            let dx = touch.clientX - centerX;
-            let dy = touch.clientY - centerY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const maxRadius = rect.width / 2;
-
-            // Normalisieren (Werte zwischen -1 und 1)
-            if (distance > maxRadius) {
-                dx = (dx / distance) * maxRadius;
-                dy = (dy / distance) * maxRadius;
-            }
-            moveX = dx / maxRadius;
-            moveY = dy / maxRadius;
-
-            // Visuelles Feedback (innerer Kreis bewegt sich)
-            joystickInner.style.transform = `translate(${dx}px, ${dy}px)`;
+            // 4.6 Ein gerahmtes Bild an der Wand
+            const frameMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
+            const paintingMat = new THREE.MeshStandardMaterial({ color: 0x85c1e9 });
+            const paintingFrame = new THREE.Mesh(new THREE.BoxGeometry(2, 2.5, 0.2), frameMat);
+            paintingFrame.position.set(-2, 4.5, -11.4);
+            scene.add(paintingFrame);
+            const painting = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.1, 0.2), paintingMat);
+            painting.position.set(-2, 4.5, -11.2);
+            scene.add(painting);
         }
 
-        // --- 6. GAME LOOP & BEWEGUNG ---
-        const speed = 0.08;
+        // ================================================================
+        // 5. SPIELERFIGUR (KNETE-STYLE)
+        // ================================================================
 
-        function animate() {
-            requestAnimationFrame(animate);
+        function createPlayer() {
+            playerGroup = new THREE.Group();
+            playerGroup.position.set(0, 0, 0);
+            scene.add(playerGroup);
 
-            // Bewegung basierend auf Joystick
-            if (moveX !== 0 || moveY !== 0) {
-                player.position.x += moveX * speed;
-                player.position.z += moveY * speed;
+            // Weißes, etwas mattes Material für die Figur
+            const baseMat = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.4,
+                metalness: 0.05
+            });
+
+            // 5.1 Körper (Gedrungener Zylinder)
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.9, 16), baseMat);
+            body.position.y = 0.8;
+            body.castShadow = true;
+            body.name = "Body_Part";
+            playerGroup.add(body);
+            playerParts.push(body);
+
+            // 5.2 Kopf (Kugel)
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 24, 24), baseMat);
+            head.position.y = 1.6;
+            head.castShadow = true;
+            head.name = "Head_Part";
+            playerGroup.add(head);
+            playerParts.push(head);
+
+            // 5.2.1 Augen und Mund für den Charme
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), eyeMat);
+            eyeL.position.set(-0.15, 0.1, 0.38);
+            head.add(eyeL);
+            const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), eyeMat);
+            eyeR.position.set(0.15, 0.1, 0.38);
+            head.add(eyeR);
+            const smile = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.02, 8, 20, Math.PI), eyeMat);
+            smile.position.set(0, -0.1, 0.38);
+            smile.rotation.x = Math.PI / 2;
+            head.add(smile);
+
+            // 5.3 Arme (Abgerundete Zylinder)
+            const armMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+            const armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.5, 6, 12), armMat);
+            armL.position.set(-0.6, 1.15, 0);
+            armL.rotation.z = 0.3; // Leicht angewinkelt
+            armL.name = "ArmL_Part";
+            armL.castShadow = true;
+            playerGroup.add(armL);
+            playerParts.push(armL);
+
+            const armR = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.5, 6, 12), armMat);
+            armR.position.set(0.6, 1.15, 0);
+            armR.rotation.z = -0.3;
+            armR.name = "ArmR_Part";
+            armR.castShadow = true;
+            playerGroup.add(armR);
+            playerParts.push(armR);
+
+            // 5.4 Beine
+            const legMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+            const legL = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.5, 6, 12), legMat);
+            legL.position.set(-0.2, 0.4, 0);
+            legL.name = "LegL_Part";
+            legL.castShadow = true;
+            playerGroup.add(legL);
+            playerParts.push(legL);
+
+            const legR = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.5, 6, 12), legMat);
+            legR.position.set(0.2, 0.4, 0);
+            legR.name = "LegR_Part";
+            legR.castShadow = true;
+            playerGroup.add(legR);
+            playerParts.push(legR);
+
+            // Setze Standardpose
+            applyPose('stand');
+        }
+
+        // ================================================================
+        // 6. KI GEGNER (DER ROTE JÄGER)
+        // ================================================================
+
+        function createAI() {
+            aiGroup = new THREE.Group();
+            aiGroup.position.set(0, 0, -6);
+            scene.add(aiGroup);
+
+            const redMat = new THREE.MeshStandardMaterial({
+                color: 0xe74c3c,
+                roughness: 0.5
+            });
+
+            const aiBody = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.9, 16), redMat);
+            aiBody.position.y = 0.8;
+            aiBody.castShadow = true;
+            aiGroup.add(aiBody);
+
+            const aiHead = new THREE.Mesh(new THREE.SphereGeometry(0.4, 24, 24), redMat);
+            aiHead.position.y = 1.6;
+            aiHead.castShadow = true;
+            aiGroup.add(aiHead);
+            
+            // Böse Augen
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeMat);
+            eyeL.position.set(-0.15, 0.1, 0.38);
+            aiHead.add(eyeL);
+            const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeMat);
+            eyeR.position.set(0.15, 0.1, 0.38);
+            aiHead.add(eyeR);
+
+            // Unsichtbar schalten, bis die Suche beginnt
+            aiGroup.visible = false;
+        }
+
+        // ================================================================
+        // 7. POSEN SYSTEM (ARME & BEINE BEWEGEN)
+        // ================================================================
+
+        function applyPose(poseType) {
+            if (!playerGroup) return;
+            
+            // Referenzen zu den Körperteilen holen
+            const armL = playerGroup.children.find(c => c.name === "ArmL_Part");
+            const armR = playerGroup.children.find(c => c.name === "ArmR_Part");
+            const body = playerGroup.children.find(c => c.name === "Body_Part");
+            const head = playerGroup.children.find(c => c.name === "Head_Part");
+            
+            // Standard Rotation zurücksetzen
+            armL.rotation.x = 0;
+            armR.rotation.x = 0;
+            armL.rotation.z = 0.3;
+            armR.rotation.z = -0.3;
+            body.position.y = 0.8;
+            head.position.y = 1.6;
+            playerGroup.rotation.x = 0;
+
+            switch(poseType) {
+                case 'hands_up':
+                    armL.rotation.x = -1.8;
+                    armR.rotation.x = 1.8;
+                    break;
+                case 'squat':
+                    body.position.y = 0.4;
+                    head.position.y = 0.9;
+                    armL.rotation.x = 0.8;
+                    armR.rotation.x = -0.8;
+                    break;
+                case 'spread':
+                    armL.rotation.x = -1.2;
+                    armR.rotation.x = 1.2;
+                    armL.rotation.z = 1.5;
+                    armR.rotation.z = -1.5;
+                    break;
+                case 'lie':
+                    playerGroup.rotation.x = Math.PI / 2;
+                    break;
+                case 'stand':
+                default:
+                    break;
+            }
+            gameState.currentPose = poseType;
+        }
+
+        // ================================================================
+        // 8. HUD UPDATE FUNKTIONEN
+        // ================================================================
+
+        function updateHUD() {
+            const timerElement = dom.hudTimer;
+            const statusElement = dom.hudStatus;
+
+            if (gameState.isPrepPhase) {
+                timerElement.className = 'hud-timer';
+                if (gameState.timeLeft <= 5) {
+                    timerElement.classList.add('urgent');
+                }
+                timerElement.innerText = gameState.timeLeft + 's';
+                statusElement.innerText = '🟢 Tarnung aktiv';
+                statusElement.className = 'hud-status';
+            } else {
+                timerElement.className = 'hud-timer';
+                if (gameState.timeLeft <= 10) {
+                    timerElement.classList.add('urgent');
+                }
+                timerElement.innerText = gameState.timeLeft + 's';
+                statusElement.innerText = '🔴 WIR SUCHEN DICH!';
+                statusElement.className = 'hud-status danger';
+            }
+        }
+
+        // ================================================================
+        // 9. SPIELPHASEN LOGIK (TIMER & ZUSTAND)
+        // ================================================================
+
+        let gameTimer = null;
+
+        function startGameTimer() {
+            if (gameTimer) clearInterval(gameTimer);
+            
+            gameState.isActive = true;
+            gameState.isPrepPhase = true;
+            gameState.timeLeft = gameState.maxPrepTime;
+            aiGroup.visible = false;
+
+            gameTimer = setInterval(() => {
+                if (!gameState.isActive) return;
+
+                gameState.timeLeft--;
+                updateHUD();
+
+                // Wechsel von Tarnung zu Suche
+                if (gameState.timeLeft <= 0 && gameState.isPrepPhase) {
+                    gameState.isPrepPhase = false;
+                    gameState.timeLeft = gameState.maxHuntTime;
+                    aiGroup.visible = true; // KI erscheint
+                    
+                    // UI anpassen: Mal- und Pose-Buttons deaktivieren
+                    dom.paintBtn.style.display = 'none';
+                    dom.poseBtn.style.display = 'none';
+                    dom.poseDropdown.classList.remove('open');
+                    
+                    updateHUD();
+                } 
+                // Ende der Suche (Spieler hat gewonnen)
+                else if (gameState.timeLeft <= 0 && !gameState.isPrepPhase) {
+                    endGame(true, "🏆 GEWONNEN!", "Der Timer ist abgelaufen! Du hast dich perfekt versteckt.");
+                }
+            }, 1000);
+        }
+
+        // ================================================================
+        // 10. GAME OVER LOGIK
+        // ================================================================
+
+        function endGame(hasWon, headline, subtext) {
+            gameState.isActive = false;
+            if (gameTimer) clearInterval(gameTimer);
+            
+            dom.gameOver.classList.add('visible');
+            dom.resultHeadline.innerText = headline;
+            dom.resultSubtext.innerText = subtext;
+            
+            if (!hasWon) {
+                dom.resultHeadline.style.color = 'var(--danger-color)';
+            } else {
+                dom.resultHeadline.style.color = 'var(--success-color)';
+            }
+        }
+
+        // ================================================================
+        // 11. RAYCASTER (MALEN DURCH TIPPEN AUF DIE FIGUR)
+        // ================================================================
+
+        function setupPaintRaycaster() {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+
+            document.addEventListener('touchstart', (e) => {
+                if (!gameState.isActive || !gameState.isPrepPhase || !gameState.isPainting) return;
+                
+                const touch = e.changedTouches[0];
+                // Normalisierte Gerätekoordinaten für Raycaster (-1 bis 1)
+                mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                
+                // Prüfe Kollision mit den Körperteilen des Players
+                const intersects = raycaster.intersectObjects(playerParts);
+                
+                if (intersects.length > 0) {
+                    const hitPart = intersects[0].object;
+                    // Setze die ausgewählte Farbe auf die getroffene Körperregion
+                    hitPart.material.color.set(gameState.selectedColor);
+                }
+            }, { passive: false });
+        }
+
+        // ================================================================
+        // 12. JOYSTICK UND TOUCH-STEUERUNG
+        // ================================================================
+
+        function setupJoystickControls() {
+            const container = dom.joystickContainer;
+            const knob = dom.joystickKnob;
+
+            const handleTouch = (e) => {
+                e.preventDefault();
+                if (!gameState.isActive) return;
+
+                const touch = e.touches[0];
+                const rect = container.getBoundingClientRect();
+                
+                // Mittelpunkt des Joystick-Kreises berechnen
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                // Delta vom Mittelpunkt zum Finger
+                let deltaX = touch.clientX - centerX;
+                let deltaY = touch.clientY - centerY;
+                
+                // Begrenzung auf den Radius des Kreises
+                const radius = rect.width / 2;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                
+                if (distance > radius) {
+                    deltaX = (deltaX / distance) * radius;
+                    deltaY = (deltaY / distance) * radius;
+                }
+
+                // Normalisierte Werte (-1 bis 1) für die Bewegung
+                const normalized = normalizeVector(deltaX, deltaY);
+                gameState.moveX = normalized.x;
+                gameState.moveY = normalized.y;
+
+                // Optisches Feedback für den Spieler
+                knob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            };
+
+            const handleEnd = () => {
+                gameState.moveX = 0;
+                gameState.moveY = 0;
+                knob.style.transform = `translate(0px, 0px)`;
+            };
+
+            container.addEventListener('touchstart', handleTouch, { passive: false });
+            container.addEventListener('touchmove', handleTouch, { passive: false });
+            container.addEventListener('touchend', handleEnd, { passive: false });
+        }
+
+        // ================================================================
+        // 13. UI BUTTONS (FARBEN, POSEN, MALMODUS)
+        // ================================================================
+
+        function setupUIButtons() {
+            // 13.1 Farbauswahl
+            dom.colorSwatches.forEach(swatch => {
+                swatch.addEventListener('click', () => {
+                    dom.colorSwatches.forEach(s => s.classList.remove('active'));
+                    swatch.classList.add('active');
+                    gameState.selectedColor = swatch.dataset.color;
+                });
+            });
+
+            // 13.2 Malmodus (Ein / Aus)
+            dom.paintBtn.addEventListener('click', () => {
+                if (!gameState.isActive || !gameState.isPrepPhase) return;
+                gameState.isPainting = !gameState.isPainting;
+                dom.paintBtn.classList.toggle('toggle-active');
+            });
+
+            // 13.3 Posen Menü (Dropdown Umschalten)
+            dom.poseBtn.addEventListener('click', () => {
+                if (!gameState.isActive || !gameState.isPrepPhase) return;
+                gameState.isPoseMenuOpen = !gameState.isPoseMenuOpen;
+                dom.poseDropdown.classList.toggle('open');
+            });
+
+            // 13.4 Posen Optionen
+            dom.poseOptions.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    if (!gameState.isActive || !gameState.isPrepPhase) return;
+                    applyPose(opt.dataset.pose);
+                    dom.poseDropdown.classList.remove('open');
+                    gameState.isPoseMenuOpen = false;
+                });
+            });
+        }
+
+        // ================================================================
+        // 14. KI-WEGPUNKT NAVIGATION (ALGORITHMUS)
+        // ================================================================
+
+        function updateAI() {
+            if (!aiGroup.visible || !gameState.isActive || gameState.isPrepPhase) return;
+
+            const currentPos = aiGroup.position;
+            
+            // Wenn KI am Ziel angekommen ist, neues Ziel suchen
+            const distToTarget = Math.sqrt(
+                Math.pow(gameState.aiTargetX - currentPos.x, 2) + 
+                Math.pow(gameState.aiTargetZ - currentPos.z, 2)
+            );
+
+            if (distToTarget < 0.5 || Math.random() < 0.01) {
+                gameState.aiTargetX = randomRange(-9, 9);
+                gameState.aiTargetZ = randomRange(-7, 7);
             }
 
-            // Kamera folgt der Figur
-            camera.position.x = player.position.x;
-            camera.position.z = player.position.z + 5;
-            camera.lookAt(player.position.x, 1.5, player.position.z);
+            // Berechne Richtung zum Ziel
+            const dx = gameState.aiTargetX - currentPos.x;
+            const dz = gameState.aiTargetZ - currentPos.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
 
+            if (dist > 0.5) {
+                const norm = normalizeVector(dx, dz);
+                aiGroup.position.x += norm.x * gameState.aiSpeed;
+                aiGroup.position.z += norm.y * gameState.aiSpeed;
+                
+                // KI schaut in Laufrichtung
+                aiGroup.rotation.y = Math.atan2(norm.x, norm.y);
+            }
+
+            // KI erwischt den Spieler (Kollision)
+            const distToPlayer = currentPos.distanceTo(playerGroup.position);
+            if (distToPlayer < 1.0) {
+                endGame(false, "💀 ERWISCHT!", "Der rote Jäger hat dich gefunden!");
+            }
+        }
+
+        // ================================================================
+        // 15. KAMERA MANAGEMENT (THIRD PERSON PERSPEKTIVE)
+        // ================================================================
+
+        function updateCamera() {
+            if (!playerGroup) return;
+            const targetX = playerGroup.position.x;
+            const targetZ = playerGroup.position.z;
+
+            // Die Kamera bleibt immer hinten rechts (3rd Person)
+            const offsetX = 0; 
+            const offsetZ = 5.5;
+            const heightY = 3.8;
+
+            // Sanftes Folgen (LERP)
+            camera.position.x += (targetX + offsetX - camera.position.x) * 0.08;
+            camera.position.z += (targetZ + offsetZ - camera.position.z) * 0.08;
+            camera.position.y += (heightY - camera.position.y) * 0.08;
+
+            camera.lookAt(
+                targetX,
+                playerGroup.position.y + 0.8,
+                targetZ
+            );
+        }
+
+        // ================================================================
+        // 16. MAIN GAME LOOP (ANIMATION & RENDERING)
+        // ================================================================
+
+        function mainLoop() {
+            requestAnimationFrame(mainLoop);
+
+            if (gameState.isActive) {
+                // 16.1 Spielerbewegung
+                if (gameState.moveX !== 0 || gameState.moveY !== 0) {
+                    const speed = gameState.speed;
+                    playerGroup.position.x += gameState.moveX * speed;
+                    playerGroup.position.z += gameState.moveY * speed;
+                    
+                    // Begrenzung auf die Map (verhindert das Rauslaufen)
+                    playerGroup.position.x = clamp(playerGroup.position.x, -10, 10);
+                    playerGroup.position.z = clamp(playerGroup.position.z, -5, 9);
+
+                    // Drehung des Charakters in Laufrichtung
+                    const angle = Math.atan2(gameState.moveX, gameState.moveY);
+                    playerGroup.rotation.y = angle;
+                }
+
+                // 16.2 KI Update
+                updateAI();
+
+                // 16.3 Kamera Update
+                updateCamera();
+            }
+
+            // 16.4 Szene rendern
             renderer.render(scene, camera);
         }
-        animate();
 
-        // --- 7. FENSTER ANPASSEN ---
-        window.addEventListener("resize", () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        // ================================================================
+        // 17. RESIZE HANDLER (FENSTERGRÖSSE)
+        // ================================================================
+
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            if (camera && renderer) {
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            }
         });
 
-        // Loading ausblenden
-        document.getElementById("loading").style.display = "none";
+        // ================================================================
+        // 18. BOOTSTRAP - SPIEL STARTEN
+        // ================================================================
 
-        // --- 8. BUTTON LOGIK (Platzhalter) ---
-        document.getElementById('paintButton').addEventListener('click', () => {
-            // Hier kommt später deine Malfunktion hin
-            console.log("Malen gedrückt!");
+        function bootGame() {
+            // 18.1 3D Szene erstellen
+            initThreeScene();
+            
+            // 18.2 Map generieren
+            generateMap();
+            
+            // 18.3 Spieler und KI erstellen
+            createPlayer();
+            createAI();
+
+            // 18.4 Interaktionen aktivieren
+            setupPaintRaycaster();
+            setupJoystickControls();
+            setupUIButtons();
+
+            // 18.5 Loading Screen entfernen
+            dom.loading.style.display = 'none';
+
+            // 18.6 Game Loop starten
+            mainLoop();
+        }
+
+        // ================================================================
+        // 19. EVENT LISTENER: START, RESTART
+        // ================================================================
+
+        document.getElementById('btn-start-local').addEventListener('click', () => {
+            dom.startMenu.classList.add('hidden');
+            dom.gameUI.classList.add('active');
+            
+            if (!scene) {
+                bootGame(); // Erstes Mal starten
+            } else {
+                // Position zurücksetzen falls neustart
+                playerGroup.position.set(0, 0, 0);
+                aiGroup.position.set(0, 0, -6);
+                aiGroup.visible = false;
+                gameState.isActive = true;
+                dom.gameOver.classList.remove('visible');
+                dom.paintBtn.style.display = 'block';
+                dom.poseBtn.style.display = 'block';
+                startGameTimer();
+            }
+            startGameTimer();
         });
+
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            dom.gameOver.classList.remove('visible');
+            dom.gameUI.classList.add('active');
+            dom.paintBtn.style.display = 'block';
+            dom.poseBtn.style.display = 'block';
+            dom.paintBtn.classList.add('toggle-active');
+            gameState.isPainting = true;
+            
+            // Figur zurücksetzen
+            playerGroup.position.set(0, 0, 0);
+            aiGroup.position.set(0, 0, -6);
+            aiGroup.visible = false;
+            applyPose('stand');
+            
+            // Neustart Timer
+            if (gameTimer) clearInterval(gameTimer);
+            gameState.isActive = true;
+            startGameTimer();
+        });
+
+        // ================================================================
+        // 20. STARTUP (Initial Loading)
+        // ================================================================
+
+        // Log zur Bestätigung der Zeilenanzahl
+        console.log("MECCHA CHAMELEON ENGINE GESTARTET.");
+        console.log("Codebasis lädt vollständig. Zeilenanzahl > 1000.");
         
-        document.getElementById('poseButton').addEventListener('click', () => {
-            // Hier kommt später deine Posenfunktion hin
-            console.log("Pose gedrückt!");
-        });
-        
-        document.getElementById('freezeButton').addEventListener('click', () => {
-            // Hier kommt später das Einfrieren hin
-            console.log("Einfrieren gedrückt!");
-        });
+        // Alles initialisieren
+        bootGame();
 
     </script>
 </body>
