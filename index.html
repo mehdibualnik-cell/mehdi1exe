@@ -1,192 +1,336 @@
-``html
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meccha Chameleon Mobile</title>
+    <title>Meccha Chameleon - Paint & Pose</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #f0f0f0; touch-action: none; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; box-sizing: border-box; }
-        #timer { font-size: 30px; font-weight: bold; color: white; text-shadow: 2px 2px 4px black; text-align: center; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; }
-        #controls { display: flex; justify-content: center; gap: 20px; pointer-events: auto; }
-        .btn { padding: 15px 30px; font-size: 20px; border: none; border-radius: 30px; background: #ff5722; color: white; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor: pointer; }
-        .btn:active { transform: scale(0.95); }
-        #joystick-area { position: absolute; bottom: 30px; left: 30px; width: 120px; height: 120px; background: rgba(255,255,255,0.2); border-radius: 50%; border: 2px solid white; pointer-events: auto; }
-        #status { text-align: center; font-size: 18px; color: white; text-shadow: 1px 1px 2px black; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; background: #222; }
+        
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; }
+        
+        #top-bar { display: flex; justify-content: space-between; padding: 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); pointer-events: none; z-index: 10; }
+        #timer { font-size: 30px; font-weight: bold; color: #4cd137; text-shadow: 0 0 15px rgba(76, 209, 55, 0.5); }
+        #timer.danger { color: #e74c3c; }
+        #status { font-size: 18px; padding: 8px 16px; background: rgba(0,0,0,0.6); border-radius: 20px; color: white; backdrop-filter: blur(4px); }
+
+        #bottom-controls { position: absolute; bottom: 20px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; pointer-events: none; z-index: 10; }
+        
+        #joystick-area { width: 120px; height: 120px; background: radial-gradient(circle, rgba(255,255,255,0.15), transparent); border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); pointer-events: auto; position: absolute; bottom: 30px; left: 30px; display: flex; justify-content: center; align-items: center; }
+        #joystick-inner { width: 40px; height: 40px; background: rgba(255,255,255,0.5); border-radius: 50%; pointer-events: none; transition: all 0.05s; }
+
+        #pose-controls { display: flex; gap: 10px; pointer-events: auto; }
+        .pose-btn { width: 60px; height: 60px; border-radius: 50%; border: 2px solid white; background: rgba(0,0,0,0.6); color: white; font-size: 12px; backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .pose-btn:active { transform: scale(0.85); background: rgba(255,255,255,0.2); }
+        .pose-btn.active { border-color: #4cd137; background: rgba(76, 209, 55, 0.3); box-shadow: 0 0 15px #4cd137; }
+        .pose-icon { font-size: 22px; margin-bottom: -5px; }
+
+        #paint-tools { position: absolute; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto; z-index: 10; }
+        .color-btn { width: 45px; height: 45px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; transition: 0.2s; }
+        .color-btn:active { transform: scale(0.85); }
+        .color-btn.selected { border-color: #4cd137; transform: scale(1.1); }
+        
+        #paint-mode { width: 55px; height: 55px; border-radius: 50%; border: none; background: linear-gradient(135deg, #f1c40f, #e67e22); color: #222; font-weight: bold; font-size: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s; }
+        #paint-mode:active { transform: scale(0.9); }
+        #paint-mode.active { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; box-shadow: 0 0 20px rgba(231, 76, 60, 0.5); }
+
+        #mode-indicator { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 20px; color: white; font-weight: bold; pointer-events: none; display: none; z-index: 10; }
+        
+        #hint { position: absolute; bottom: 200px; width: 100%; text-align: center; color: rgba(255,255,255,0.8); text-shadow: 0 2px 4px black; font-weight: bold; z-index: 10; pointer-events: none; display: block; }
     </style>
-    <!-- Three.js laden -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <!-- UI Elemente -->
     <div id="ui-layer">
-        <div>
+        <div id="top-bar">
+            <div id="status">🟢 Versteck dich!</div>
             <div id="timer">60s</div>
-            <div id="status">Tarnung aktiv!</div>
         </div>
-        <div id="controls">
-            <button class="btn" id="pipetteBtn">🎨 Pipette</button>
+        <div id="mode-indicator">🎨 Mal-Modus aktiv</div>
+        <div id="hint">👣 Zum Laufen: Joystick links<br>🎨 Anmalen: Rechts auf "Malen", dann auf Figur tippen</div>
+
+        <div id="bottom-controls">
+            <div id="pose-controls">
+                <div class="pose-btn active" data-pose="stand"><span class="pose-icon">🧍</span>Stehen</div>
+                <div class="pose-btn" data-pose="hands_up"><span class="pose-icon">🙌</span>Hoch</div>
+                <div class="pose-btn" data-pose="lie"><span class="pose-icon">🛌</span>Liegen</div>
+                <div class="pose-btn" data-pose="squat"><span class="pose-icon">🧎</span>Hocken</div>
+            </div>
         </div>
-        <div id="joystickj-area"></div>
+
+        <div id="joystick-area"><div id="joystick-inner"></div></div>
+
+        <div id="paint-tools">
+            <button id="paint-mode">🎨<br>Malen</button>
+            <div class="color-btn selected" style="background:#e74c3c;" data-color="#e74c3c"></div>
+            <div class="color-btn" style="background:#3498db;" data-color="#3498db"></div>
+            <div class="color-btn" style="background:#f1c40f;" data-color="#f1c40f"></div>
+            <div class="color-btn" style="background:#2ecc71;" data-color="#2ecc71"></div>
+            <div class="color-btn" style="background:#9b59b6;" data-color="#9b59b6"></div>
+            <div class="color-btn" style="background:#e67e22;" data-color="#e67e22"></div>
+        </div>
     </div>
 
     <script>
-        // --- 1. SZENE & KAMERA SETUP ---
+        // --- 1. SZENE SETUP ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Himmelblau
+        // Kein weißer Hintergrund mehr, sondern ein heller Raum
+        scene.background = new THREE.Color(0xecf0f1);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 5, 10);
-        camera.lookAt(0, 0, 0);
-
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        // --- 2. LICHT ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        // --- 2. LICHT (WICHTIG FÜR SICHTBARKEIT) ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(5, 10, 5);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
         scene.add(dirLight);
+        
+        // Zusätzliches Licht von hinten
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        backLight.position.set(-5, 5, -10);
+        scene.add(backLight);
 
-        // --- 3. WELT (Wände & Boden, die als Farbquellen dienen) ---
-        // Boden (Grün)
-        const floorGeo = new THREE.PlaneGeometry(20, 20);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x2ecc71 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
+        // --- 3. WELT (FARBIGE WÄNDE & BODEN) ---
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x95a5a6, roughness: 0.9 });
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), floorMat);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = -0.5;
+        floor.receiveShadow = true;
         scene.add(floor);
 
-        // Wand 1 (Rot/Ziegel Look - wir nehmen ein einfaches Rot für den Test)
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c });
-        const wall1 = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 0.5), wallMat);
-        wall1.position.set(0, 2, -5);
-        scene.add(wall1);
+        // Farbige Boxen/Wände zum Anmalen
+        const wallColors = [0xe74c3c, 0x3498db, 0xf1c40f, 0x2ecc71, 0x9b59b6];
+        const wallPositions = [
+            [-8, 2, -8, 16, 5, 0.5],  // Hintere Wand
+            [-8, 2, 8, 16, 5, 0.5],   // Vordere Wand
+            [-8, 2, 0, 0.5, 5, 16],   // Linke Wand
+            [8, 2, 0, 0.5, 5, 16]     // Rechte Wand
+        ];
 
-        // Wand 2 (Blau)
-        const wallMat2 = new THREE.MeshStandardMaterial({ color: 0x3498db });
-        const wall2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5, 10), wallMat2);
-        wall2.position.set(5, 2, 0);
-        scene.add(wall2);
+        wallPositions.forEach((pos, index) => {
+            const mat = new THREE.MeshStandardMaterial({ color: wallColors[index % wallColors.length], roughness: 0.7 });
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(pos[3], pos[4], pos[5]), mat);
+            wall.position.set(pos[0], pos[1], pos[2]);
+            wall.castShadow = true;
+            wall.receiveShadow = true;
+            scene.add(wall);
+        });
 
-        // --- 4. DER SPIELER (HIDER) ---
-        // Ein weißer Zylinder wie im Original
-        const playerGeo = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 16);
-        const playerMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-        const player = new THREE.Mesh(playerGeo, playerMat);
-        player.position.set(0, 0.5, 0);
-        scene.add(player);
+        // --- 4. DER SPIELER (WEISS, SICHTBAR) ---
+        const playerGroup = new THREE.Group();
+        playerGroup.position.set(0, 0, 0);
+        scene.add(playerGroup);
 
-        // Kopf für den Smiley (Optional)
-        const headGeo = new THREE.SphereGeometry(0.4);
-        const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-        const head = new THREE.Mesh(headGeo, headMat);
-        head.position.set(0, 1.2, 0);
-        player.add(head);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+        const armMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+        
+        // Körper
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1), bodyMat);
+        body.position.y = 0.5;
+        body.castShadow = true;
+        playerGroup.add(body);
 
-        // --- 5. SPIELLOGIK & STEUERUNG ---
+        // Kopf
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 24, 24), headMat);
+        head.position.y = 1.2;
+        head.castShadow = true;
+        playerGroup.add(head);
+
+        // Smiley auf Kopf malen (für den Look)
+        const smileyGroup = new THREE.Group();
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), eyeMat);
+        eye.position.set(-0.15, 0.1, 0.35);
+        smileyGroup.add(eye);
+        const eye2 = eye.clone(); eye2.position.set(0.15, 0.1, 0.35);
+        smileyGroup.add(eye2);
+        const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.03, 8, 20, Math.PI), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+        mouth.position.set(0, -0.05, 0.35);
+        mouth.rotation.x = Math.PI / 2;
+        mouth.rotation.z = -0.1;
+        smileyGroup.add(mouth);
+        head.add(smileyGroup);
+
+        // Arme
+        const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.7), armMat);
+        armL.position.set(-0.5, 0.9, 0);
+        armL.rotation.z = 0.2;
+        armL.castShadow = true;
+        playerGroup.add(armL);
+
+        const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.7), armMat);
+        armR.position.set(0.5, 0.9, 0);
+        armR.rotation.z = -0.2;
+        armR.castShadow = true;
+        playerGroup.add(armR);
+
+        // Beine
+        const legMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+        const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.5), legMat);
+        legL.position.set(-0.2, 0.25, 0);
+        legL.castShadow = true;
+        playerGroup.add(legL);
+
+        const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.5), legMat);
+        legR.position.set(0.2, 0.25, 0);
+        legR.castShadow = true;
+        playerGroup.add(legR);
+
+        // --- 5. SPIELER POSITIONIEREN (KAMERA EINSTELLEN) ---
+        // Wir setzen die Kamera sofort auf den Spieler, damit er nicht verschwindet
+        function updateCamera() {
+            const camDist = 6;
+            const camHeight = 4;
+            camera.position.x = playerGroup.position.x;
+            camera.position.z = playerGroup.position.z + camDist;
+            camera.position.y = playerGroup.position.y + camHeight;
+            camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.5, playerGroup.position.z);
+        }
+        updateCamera(); // Einmalig beim Start ausführen
+
+        // --- 6. SPIELLOGIK (TIMER) ---
         let timeLeft = 60;
-        let isPrepPhase = true;
+        let isGameActive = true;
         const timerDisplay = document.getElementById('timer');
         const statusDisplay = document.getElementById('status');
 
-        // Timer Countdown
-        setInterval(() => {
+        const timerInterval = setInterval(() => {
             if(timeLeft > 0) {
                 timeLeft--;
                 timerDisplay.innerText = timeLeft + "s";
-            } else if(isPrepPhase) {
-                isPrepFrame = false;
-                statusDisplay.innerText = "SUCHE LÄUFT!";
-                timerDisplay.style.color = "red";
+                if(timeLeft <= 10) { timerDisplay.classList.add('danger'); }
+            } else {
+                isGameActive = false;
+                statusDisplay.innerText = "🔴 Zeit abgelaufen!";
+                document.getElementById('hint').style.display = 'none';
+                clearInterval(timerInterval);
             }
         }, 1000);
 
-        // --- JOYSTICK (Touch-Steuerung für Handy) ---
-        let joystickX = 0, joystickY = 0;
+        // --- 7. JOYSTICK ---
+        let moveX = 0, moveY = 0;
         const joystickArea = document.getElementById('joystick-area');
+        const joystickInner = document.getElementById('joystick-inner');
         
-        joystickArea.addEventListener('touchstart', (e) => handleJoystick(e));
-        joystickArea.addEventListener('touchmove', (e) => handleJoystick(e));
-        joystickArea.addEventListener('touchend', () => { joystickX = 0; joystickY = 0; });
+        joystickArea.addEventListener('touchstart', (e) => handleJoystick(e), {passive: false});
+        joystickArea.addEventListener('touchmove', (e) => handleJoystick(e), {passive: false});
+        joystickArea.addEventListener('touchend', () => { moveX = 0; moveY = 0; joystickInner.style.transform = 'translate(0,0)'; });
 
         function handleJoystick(e) {
+            e.preventDefault();
             const touch = e.touches[0];
             const rect = joystickArea.getBoundingClientRect();
-            // Berechne relative Position innerhalb des Kreises (-1 bis 1)
-            let x = (touch.clientX - rect.left) / (rect.width / 2) - 1;
-            let y = -((touch.clientY - rect.top) / (rect.height / 2) - 1);
-            
-            // Begrenzung auf Kreisradius (1)
-            const length = Math.sqrt(x*x + y*y);
-            if(length > 1) { x /= length; y /= length; }
-            
-            joystickX = x;
-            joystickY = y;
+            let dx = touch.clientX - (rect.left + rect.width/2);
+            let dy = touch.clientY - (rect.top + rect.height/2);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const max = rect.width / 2;
+            if (dist > max) { dx = (dx/dist)*max; dy = (dy/dist)*max; }
+            moveX = dx / max;
+            moveY = dy / max;
+            joystickInner.style.transform = `translate(${dx}px, ${dy}px)`;
         }
 
-        // --- PIPETTE (Tarnung) ---
-        document.getElementById('pipetteBtn').addEventListener('click', () => {
-            if(!isPrepPhase) return; // Nur in der Vorbereitung
-            
-            // Raycaster, um die Farbe der Wand hinter dem Spieler zu erfassen
-            const raycaster = new THREE.Raycaster();
-            // Wir schießen einen Strahl vom Spieler aus NACH HINTEN (Rücken)
-            const direction = new THREE.Vector3(0, 0, 1); // Geht nach hinten
-            // Transformiere Richtung basierend auf Spielerrotation (falls wir drehen würden)
-            direction.applyQuaternion(player.quaternion);
-            
-            raycaster.set(player.position, direction);
-            
-            // Prüfe Kollisionen (Wände und Boden)
-            const intersects = raycaster.intersectObjects([floor, wall1, wall2]);
-            
-            if (intersects.length > 0) {
-                // Farbe des ersten getroffenen Objekts nehmen
-                const hitColor = intersects[0].object.material.color;
+        // --- 8. POSEN-STEUERUNG ---
+        const poseBtns = document.querySelectorAll('.pose-btn');
+        const poseStates = {
+            'stand': { armL: 0.2, armR: -0.2, legL: 0, legR: 0, bodyY: 0.5, headY: 1.2 },
+            'hands_up': { armL: 1.5, armR: -1.5, legL: 0, legR: 0, bodyY: 0.5, headY: 1.2 },
+            'lie': { armL: 0.5, armR: -0.5, legL: 1.5, legR: 1.5, bodyY: 0.1, headY: 0.8 },
+            'squat': { armL: 0.5, armR: -0.5, legL: 0.5, legR: 0.5, bodyY: 0.1, headY: 0.8 }
+        };
+
+        poseBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if(!isGameActive) return;
+                poseBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
                 
-                // Eigene Farbe ändern
-                playerMat.color.set(hitColor);
-                headMat.color.set(hitColor);
-                statusDisplay.innerText = "Getarnt! (Farbe aufgenommen)";
-                statusDisplay.style.color = "lightgreen";
-            } else {
-                statusDisplay.innerText = "Nichts zum Pipettieren gefunden!";
-                statusDisplay.style.color = "red";
-            }
+                const pose = poseStates[btn.dataset.pose];
+                armL.rotation.x = pose.armL;
+                armR.rotation.x = pose.armR;
+                legL.rotation.x = pose.legL;
+                legR.rotation.x = pose.legR;
+                body.position.y = pose.bodyY;
+                head.position.y = pose.headY;
+                
+                // Liegen -> Körper umkippen
+                if(btn.dataset.pose === 'lie') {
+                    playerGroup.rotation.x = Math.PI / 2;
+                } else {
+                    playerGroup.rotation.x = 0;
+                }
+            });
         });
 
-        // --- 6. GAME LOOP (Bewegung & Rendern) ---
+        // --- 9. MAL-MODUS ---
+        let isPainting = false;
+        let currentColor = '#e74c3c';
+        const paintBtn = document.getElementById('paint-mode');
+        const indicator = document.getElementById('mode-indicator');
+        const colorBtns = document.querySelectorAll('.color-btn');
+
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                colorBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                currentColor = btn.dataset.color;
+            });
+        });
+
+        paintBtn.addEventListener('click', () => {
+            if(!isGameActive) return;
+            isPainting = !isPainting;
+            paintBtn.classList.toggle('active');
+            indicator.style.display = isPainting ? 'block' : 'none';
+        });
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        document.addEventListener('touchmove', (e) => {
+            if(!isPainting || !isGameActive) return;
+            const touch = e.touches[0];
+            mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(playerGroup.children);
+            
+            if (intersects.length > 0) {
+                intersects[0].object.material.color.set(currentColor);
+            }
+        }, {passive: false});
+
+        // --- 10. GAME LOOP ---
+        let targetPos = new THREE.Vector3(0, 0, 0);
         function animate() {
             requestAnimationFrame(animate);
 
-            // Bewegung basierend auf Joystick
-            if(joystickX !== 0 || joystickY !== 0) {
-                player.position.x += joystickX * 0.1;
-                player.position.z += joystickY * 0.1;
-                
-                // Rotation in Laufrichtung
-                if(joystickX !== 0 || joystickY !== 0) {
-                    let angle = Math.atan2(joystickX, joystickY);
-                    player.rotation.y = angle;
-                }
+            if(isGameActive) {
+                targetPos.x += moveX * 0.08;
+                targetPos.z += moveY * 0.08;
+                // Begrenzung, damit er nicht aus der Welt fällt
+                targetPos.x = Math.max(-7, Math.min(7, targetPos.x));
+                targetPos.z = Math.max(-7, Math.min(7, targetPos.z));
+
+                playerGroup.position.x += (targetPos.x - playerGroup.position.x) * 0.15;
+                playerGroup.position.z += (targetPos.z - playerGroup.position.z) * 0.15;
             }
 
-            // Kamera immer hinter dem Spieler (Third Person)
-            camera.position.x = player.position.x;
-            camera.position.z = player.position.z + 8; // Abstand nach hinten
-            camera.position.y = player.position.y + 4; // Höhe
-            camera.lookAt(player.position);
-
+            updateCamera(); // Kamera folgt dem Spieler
             renderer.render(scene, camera);
         }
         animate();
 
-        // Größenanpassung für Handy
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -195,6 +339,3 @@
     </script>
 </body>
 </html>
-```
-
-
