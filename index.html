@@ -2,676 +2,340 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>MECCHA CHAMELEON — Mobile Optimized</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Meccha Chamäleon 3D</title>
 <style>
-  :root{
-    --bg:#0d1210;
-    --panel:#141b17;
-    --ink:#eef5ee;
-    --muted:#9fb3a6;
-    --accent:#6bcb77;
-    --accent2:#3fae53;
-    --danger:#ef5350;
-    --warn:#e0a72e;
-    --line:#24312a;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
-  html,body{
-    margin:0; padding:0; height:100%; background:var(--bg); color:var(--ink);
-    font-family:'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
-    overflow:hidden; touch-action:none;
-  }
-  #app{
-    position:relative; width:100vw; height:100vh;
-    display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(ellipse at 50% 20%, #182019 0%, #0a0e0c 75%);
-  }
-  #stage{
-    position:relative;
-    width:100%; height:100%;
-    max-width:1280px;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#111; font-family:Arial,Helvetica,sans-serif; }
+  #game { display:block; width:100%; height:100%; touch-action:none; }
 
-  /* --- CANVAS OPTIMIERT FÜR HANDY --- */
-  #gameCanvas{
-    background:#c9b183;
-    width:100vw;
-    height:100vh;
-    max-width:none;
-    max-height:none;
-    border-radius:0;
-    box-shadow:none;
-    object-fit:contain;
-    touch-action:none;
-    position:absolute; top:0; left:0;
-  }
+  /* Bewegungs-Joystick unten links */
+  #stick { position:fixed; left:20px; bottom:20px; width:120px; height:120px; border-radius:50%;
+           background:rgba(255,255,255,0.12); border:2px solid rgba(255,255,255,0.3); touch-action:none; z-index:10; }
+  #knob { position:absolute; left:35px; top:35px; width:50px; height:50px; border-radius:50%;
+          background:rgba(255,255,255,0.7); }
 
-  /* ---------- Orientation Lock Overlay ---------- */
-  #rotateOverlay{
-    position:fixed; inset:0; background:#000; color:#fff; display:none;
-    justify-content:center; align-items:center; flex-direction:column; z-index:999;
-    text-align:center; padding:20px;
-  }
-  #rotateOverlay.show{display:flex;}
-  #rotateOverlay h2{font-size:28px; margin-bottom:10px;}
+  /* Kamera-Bereich rechts */
+  #look { position:fixed; right:0; top:0; width:50%; height:100%; z-index:5; touch-action:none; }
 
-  /* ---------- HUD ---------- */
-  #hud{
-    position:absolute; top:10px; left:10px; right:10px;
-    display:flex; justify-content:space-between; align-items:flex-start;
-    pointer-events:none; font-variant-numeric: tabular-nums;
-    z-index:5;
-  }
-  .hudBox{
-    background:rgba(10,14,12,.72); border:1px solid var(--line);
-    border-radius:10px; padding:6px 12px; backdrop-filter: blur(3px);
-  }
-  #timerBox{ text-align:center; min-width:90px;}
-  #timerLabel{font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase;}
-  #timerValue{font-size:24px; font-weight:800; color:var(--accent); line-height:1.1;}
-  #roundBox{font-size:11px; color:var(--muted);}
-  #roundBox b{color:var(--ink);}
+  /* Buttons rechts */
+  .btns { position:fixed; right:15px; bottom:20px; display:flex; flex-direction:column; gap:10px; z-index:10; }
+  .btn { padding:14px 10px; min-width:70px; text-align:center; border-radius:12px; color:#fff;
+         font-weight:bold; font-size:14px; background:rgba(80,80,220,0.75); border:2px solid rgba(255,255,255,0.4); }
+  .btn:active { background:rgba(120,120,255,0.9); }
+  #btnPose { background:rgba(220,120,60,0.75); }
+  #btnBrush.active { background:rgba(60,200,120,0.9); }
 
-  #detectWrap{width:130px;}
-  #detectLabel{font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;}
-  #detectBar{height:8px; border-radius:6px; background:#1e2a22; overflow:hidden; border:1px solid var(--line);}
-  #detectFill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent2),var(--danger)); transition:width .12s linear;}
-  #camoLabel{font-size:10px; margin-top:4px; color:var(--muted);}
-  #camoVal{font-weight:700;}
+  /* Farbwähler oben */
+  #palette { position:fixed; top:12px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:10;
+             background:rgba(0,0,0,0.35); padding:8px 12px; border-radius:14px; }
+  .swatch { width:34px; height:34px; border-radius:50%; border:2px solid #fff; }
+  .swatch.sel { border:3px solid #ffea00; transform:scale(1.15); }
 
-  /* ---------- Palette (Größer für dicke Finger) ---------- */
-  #palette{
-    position:absolute; right:15px; bottom:130px;
-    display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;
-    z-index:6; padding:10px; border-radius:16px;
-    background:rgba(10,14,12,.72); border:1px solid var(--line); backdrop-filter: blur(3px);
-  }
-  .swatch{
-    width:52px; height:52px; border-radius:14px; border:2px solid rgba(255,255,255,.15);
-    cursor:pointer; position:relative; box-shadow: inset 0 0 8px rgba(0,0,0,.4);
-    transition: transform .08s ease;
-  }
-  .swatch:active{transform:scale(.9);}
-  .swatch.selected{ border-color:#fff; transform:translateY(-4px); box-shadow:0 4px 12px rgba(0,0,0,.5);}
-
-  /* ---------- Joystick (Vergrößert) ---------- */
-  #joyBase{
-    position:absolute; left:25px; bottom:35px; 
-    width:130px; height:130px; border-radius:50%;
-    background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.25); z-index:6;
-    display:block;
-  }
-  #joyKnob{
-    position:absolute; left:50%; top:50%; width:55px; height:55px; margin:-27.5px 0 0 -27.5px;
-    border-radius:50%; background:rgba(107,203,119,.55); border:2px solid rgba(255,255,255,.4);
-  }
-
-  /* ---------- Overlays ---------- */
-  .overlay{
-    position:absolute; inset:0; z-index:20;
-    display:flex; align-items:center; justify-content:center; flex-direction:column;
-    background:rgba(6,9,7,.88); text-align:center; padding:20px;
-  }
-  .hidden{display:none !important;}
-  .title{
-    font-size:clamp(28px,6vw,52px); font-weight:900; letter-spacing:1px; color:var(--accent);
-    text-shadow:0 0 24px rgba(107,203,119,.4);
-    margin:0 0 4px 0;
-  }
-  .subtitle{ color:var(--muted); font-size:14px; margin-bottom:22px; max-width:480px; line-height:1.5;}
-  .rules{
-    text-align:left; max-width:460px; color:var(--ink); font-size:13.5px; line-height:1.7;
-    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:22px;
-  }
-  .rules b{color:var(--accent);}
-  
-  /* --- Knöpfe EXTRA BREIT für Handy --- */
-  .btn{
-    background:var(--accent); color:#08130a; border:none; 
-    width:85vw; max-width:350px; padding:18px; font-size:18px;
-    font-weight:800; border-radius:14px; cursor:pointer; letter-spacing:.5px;
-    box-shadow:0 6px 0 var(--accent2), 0 10px 20px rgba(0,0,0,.4);
-    transition:transform .08s ease;
-  }
-  .btn:active{transform:translateY(4px); box-shadow:0 2px 0 var(--accent2);}
-  .btn.secondary{ background:transparent; color:var(--ink); border:1px solid var(--line); box-shadow:none; margin-top:10px;}
-  
-  .resultBig{font-size:clamp(30px,7vw,58px); font-weight:900; margin-bottom:6px;}
-  .win .resultBig{color:var(--accent);}
-  .lose .resultBig{color:var(--danger);}
-  .statLine{color:var(--muted); font-size:14px; margin-bottom:20px;}
-  .foot{position:absolute; bottom:8px; font-size:10.5px; color:#5b6b61; z-index:2;}
+  #hint { position:fixed; top:60px; left:50%; transform:translateX(-50%); color:#fff; font-size:13px;
+          background:rgba(0,0,0,0.4); padding:6px 12px; border-radius:10px; z-index:10; text-align:center; }
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="stage">
-    <canvas id="gameCanvas" width="1200" height="750"></canvas>
+<canvas id="game"></canvas>
 
-    <div id="rotateOverlay">
-      <h2>↻ Handy bitte quer halten</h2>
-      <p style="color:#aaa;">Dieses Spiel ist nur im Querformat (Landscape) spielbar.</p>
-    </div>
+<div id="palette"></div>
+<div id="hint">Bewege dich, gehe an eine Wand und klebe dich fest. Pinsel an → tippe auf deinen Körper zum Anmalen.</div>
 
-    <div id="hud" class="hidden">
-      <div class="hudBox" id="detectWrap">
-        <div id="detectLabel">Entdeckung</div>
-        <div id="detectBar"><div id="detectFill"></div></div>
-        <div id="camoLabel">Tarnung: <span id="camoVal">0%</span></div>
-      </div>
-      <div class="hudBox" id="timerBox">
-        <div id="timerLabel">Zeit</div>
-        <div id="timerValue">90</div>
-      </div>
-      <div class="hudBox" id="roundBox">Runde<br><b id="roundVal">1</b></div>
-    </div>
-
-    <!-- Palette & Joystick -->
-    <div id="palette" class="hidden"></div>
-    <div id="joyBase"><div id="joyKnob"></div></div>
-
-    <div id="startScreen" class="overlay">
-      <h1 class="title">MECCHA CHAMELEON</h1>
-      <div class="subtitle">Mobile Edition — komplette Touch-Steuerung.</div>
-      <div class="rules">
-        <b>Ziel:</b> Überlebe den Timer, ohne von den Suchern entdeckt zu werden.<br>
-        <b>Bewegen:</b> Joystick unten links verwenden.<br>
-        <b>Farbe wechseln:</b> Tippe auf die Farbkacheln rechts.<br>
-        <b>Tarnung:</b> Je näher deine Farbe an der Untergrundfarbe ist, desto schwerer wirst du entdeckt.<br>
-      </div>
-      <button class="btn" id="startBtn">Spiel starten</button>
-    </div>
-
-    <div id="resultScreen" class="overlay hidden">
-      <div class="resultBig" id="resultTitle">Erwischt!</div>
-      <div class="statLine" id="resultStat">Du hast 12s überlebt, Runde 1</div>
-      <button class="btn" id="retryBtn">Nochmal versuchen</button>
-      <button class="btn secondary" id="menuBtn">Zurück zum Menü</button>
-    </div>
-
-    <div class="foot">Fan-made · Mobile Only · Keine Verbindung zum offiziellen Spiel</div>
-  </div>
+<div id="stick"><div id="knob"></div></div>
+<div id="look"></div>
+<div class="btns">
+  <div class="btn" id="btnStick">KLEBEN</div>
+  <div class="btn" id="btnPose">POSE</div>
+  <div class="btn" id="btnBrush">PINSEL</div>
 </div>
 
 <script>
-(function(){
-  "use strict";
+// ---------- Setup ----------
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+let W, H;
+function resize(){ W=cv.width=innerWidth; H=cv.height=innerHeight; }
+resize(); window.addEventListener('resize', resize);
 
-  /* ============================= CONFIG ============================= */
-  const WORLD_W = 1200, WORLD_H = 750;
-  const PALETTE = [
-    {name:'Sand',  hex:'#c9b183'},
-    {name:'Moos',  hex:'#5c8a3a'},
-    {name:'Glut',  hex:'#c9432f'},
-    {name:'Sonne', hex:'#e0a72e'},
-    {name:'Himmel',hex:'#3d7fc4'},
-    {name:'Pflaume',hex:'#7a4a8f'},
-    {name:'Kohle', hex:'#33322e'}
-  ];
-  const BASE_TIME = 90;
-  const DETECTION_MAX = 100;
-  const DETECTION_DECAY = 26;
-  const PLAYER_SPEED = 210;
-  const PLAYER_RADIUS = 16;
+// ---------- Kleine 3D-Mathe (kein Framework) ----------
+function rotY(p, a){ const c=Math.cos(a), s=Math.sin(a); return {x:p.x*c+p.z*s, y:p.y, z:-p.x*s+p.z*c}; }
 
-  function hexToRgb(hex){
-    const v = parseInt(hex.slice(1),16);
-    return {r:(v>>16)&255, g:(v>>8)&255, b:v&255};
+const cam = { x:0, y:1.6, z:6, yaw:Math.PI, pitch:0, fov:520 };
+
+// Welt: einfaches Haus (Boden + 4 Wände). Farbige Quads.
+const walls = [];
+function wall(x1,z1,x2,z2,color){ walls.push({x1,z1,x2,z2,color,h:3}); }
+const R = 8; // Raumgröße
+wall(-R,-R, R,-R, '#b7794a'); // Ziegelfarbe
+wall( R,-R, R, R, '#8fb56f'); // grün
+wall( R, R,-R, R, '#6f8fb5'); // blau
+wall(-R, R,-R,-R, '#c9b06f'); // gelb
+// Ein paar Innen-Objekte (Kisten) als extra Verstecke
+const boxes = [
+  {x:-4,z:-3,s:1.2,color:'#d05050'},
+  {x:3,z:2,s:1.5,color:'#5050d0'},
+  {x:0,z:-4,s:1,color:'#50a050'},
+];
+
+// ---------- Projektion ----------
+function project(px,py,pz){
+  let x=px-cam.x, y=py-cam.y, z=pz-cam.z;
+  // yaw
+  let cy=Math.cos(-cam.yaw), sy=Math.sin(-cam.yaw);
+  let x1=x*cy - z*sy, z1=x*sy + z*cy;
+  // pitch
+  let cp=Math.cos(-cam.pitch), sp=Math.sin(-cam.pitch);
+  let y1=y*cp - z1*sp, z2=y*sp + z1*cp;
+  if(z2<=0.1) return null;
+  const sx=W/2 + (x1/z2)*cam.fov;
+  const sy2=H/2 - (y1/z2)*cam.fov;
+  return {x:sx,y:sy2,z:z2};
+}
+
+// ---------- Spieler ----------
+const player = {
+  x:0, z:0, y:0, angle:0,
+  stuck:false, pose:0,           // pose: 0 stehen, 1 gekugelt, 2 liegend
+  body:'blob',                   // Form: rund (blob)
+  color:'#ffffff',
+  paint:[]                       // Farbkleckse: {u,v,c,r}
+};
+
+// ---------- Farbpalette ----------
+const colors = ['#ffffff','#b7794a','#8fb56f','#6f8fb5','#c9b06f','#d05050','#222222'];
+let selColor = 0;
+const pal = document.getElementById('palette');
+colors.forEach((c,i)=>{
+  const s=document.createElement('div');
+  s.className='swatch'+(i===0?' sel':'');
+  s.style.background=c;
+  s.onclick=()=>{ selColor=i; document.querySelectorAll('.swatch').forEach(e=>e.classList.remove('sel')); s.classList.add('sel'); };
+  pal.appendChild(s);
+});
+
+// ---------- Steuerung: Joystick ----------
+let move={x:0,y:0};
+const stick=document.getElementById('stick'), knob=document.getElementById('knob');
+let stickId=null, sc={x:80,y:innerHeight-80};
+function stickStart(e){ const t=e.changedTouches?e.changedTouches[0]:e; stickId=t.identifier??'m';
+  const r=stick.getBoundingClientRect(); sc={x:r.left+r.width/2, y:r.top+r.height/2}; stickMove(e); }
+function stickMove(e){
+  const list=e.changedTouches?[...e.changedTouches]:[e];
+  const t=list.find(x=>(x.identifier??'m')===stickId); if(!t)return;
+  let dx=t.clientX-sc.x, dy=t.clientY-sc.y; const d=Math.hypot(dx,dy), max=45;
+  if(d>max){ dx=dx/d*max; dy=dy/d*max; }
+  knob.style.left=(35+dx)+'px'; knob.style.top=(35+dy)+'px';
+  move.x=dx/max; move.y=dy/max;
+}
+function stickEnd(){ stickId=null; move={x:0,y:0}; knob.style.left='35px'; knob.style.top='35px'; }
+stick.addEventListener('touchstart',e=>{e.preventDefault();stickStart(e);},{passive:false});
+stick.addEventListener('touchmove',e=>{e.preventDefault();stickMove(e);},{passive:false});
+stick.addEventListener('touchend',e=>{e.preventDefault();stickEnd();},{passive:false});
+stick.addEventListener('mousedown',stickStart);
+window.addEventListener('mousemove',e=>{if(stickId==='m')stickMove(e);});
+window.addEventListener('mouseup',()=>{if(stickId==='m')stickEnd();});
+
+// ---------- Steuerung: Kamera-Blick ----------
+const look=document.getElementById('look');
+let lookId=null, lx=0, ly=0;
+function lookStart(e){ const t=e.changedTouches?e.changedTouches[0]:e; lookId=t.identifier??'lm'; lx=t.clientX; ly=t.clientY; }
+function lookMove(e){
+  const list=e.changedTouches?[...e.changedTouches]:[e];
+  const t=list.find(x=>(x.identifier??'lm')===lookId); if(!t)return;
+  cam.yaw += (t.clientX-lx)*0.005;
+  cam.pitch = Math.max(-1, Math.min(1, cam.pitch + (t.clientY-ly)*0.005));
+  lx=t.clientX; ly=t.clientY;
+}
+function lookEnd(){ lookId=null; }
+look.addEventListener('touchstart',e=>{e.preventDefault();lookStart(e);},{passive:false});
+look.addEventListener('touchmove',e=>{e.preventDefault();lookMove(e);},{passive:false});
+look.addEventListener('touchend',e=>{e.preventDefault();lookEnd();},{passive:false});
+look.addEventListener('mousedown',lookStart);
+window.addEventListener('mousemove',e=>{if(lookId==='lm')lookMove(e);});
+window.addEventListener('mouseup',()=>{if(lookId==='lm')lookEnd();});
+
+// ---------- Buttons ----------
+document.getElementById('btnStick').onclick=()=>{ player.stuck=!player.stuck; };
+document.getElementById('btnPose').onclick=()=>{ player.pose=(player.pose+1)%3; };
+let brushOn=false;
+const btnBrush=document.getElementById('btnBrush');
+btnBrush.onclick=()=>{ brushOn=!brushOn; btnBrush.classList.toggle('active',brushOn); };
+
+// Tastatur (Desktop)
+const keys={};
+window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;
+  if(e.key===' ')player.stuck=!player.stuck;
+  if(e.key.toLowerCase()==='q')player.pose=(player.pose+1)%3;
+});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+
+// ---------- Anmalen: Tippen auf den Körper ----------
+let playerScreen=null; // {x,y,r}
+function tryPaint(sx,sy){
+  if(!brushOn || !playerScreen) return false;
+  const d=Math.hypot(sx-playerScreen.x, sy-playerScreen.y);
+  if(d<=playerScreen.r){
+    const u=(sx-playerScreen.x)/playerScreen.r;
+    const v=(sy-playerScreen.y)/playerScreen.r;
+    player.paint.push({u,v,c:colors[selColor],r:0.35+Math.random()*0.2});
+    if(player.paint.length>40) player.paint.shift();
+    return true;
   }
-  function rgbDist(a,b){
-    return Math.sqrt((a.r-b.r)**2 + (a.g-b.g)**2 + (a.b-b.b)**2);
-  }
-  const MAX_RGB_DIST = Math.sqrt(3*255*255);
-  function normAngle(a){
-    while(a > Math.PI) a -= Math.PI*2;
-    while(a < -Math.PI) a += Math.PI*2;
-    return a;
-  }
-  function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
-  function rand(lo,hi){ return lo + Math.random()*(hi-lo); }
-  function rrect(ctx,x,y,w,h,r){
-    ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.arcTo(x+w,y,x+w,y+h,r);
-    ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r);
-    ctx.arcTo(x,y,x+w,y,r);
-    ctx.closePath();
+  return false;
+}
+cv.addEventListener('touchstart',e=>{ for(const t of e.changedTouches) tryPaint(t.clientX,t.clientY); },{passive:true});
+cv.addEventListener('mousedown',e=>{ tryPaint(e.clientX,e.clientY); });
+
+// ---------- Update ----------
+function update(){
+  const speed=0.12;
+  let fx=0, fz=0;
+  // Bewegung relativ zur Kamera
+  const s=Math.sin(cam.yaw), c=Math.cos(cam.yaw);
+  let mx=move.x, my=move.y;
+  if(keys['w'])my-=1; if(keys['s'])my+=1; if(keys['a'])mx-=1; if(keys['d'])mx+=1;
+  if(!player.stuck && (mx||my)){
+    fx = (mx*c - my*s);
+    fz = (mx*s + my*c);
+    const nx=player.x+fx*speed, nz=player.z+fz*speed;
+    if(Math.abs(nx)<R-0.6) player.x=nx;
+    if(Math.abs(nz)<R-0.6) player.z=nz;
+    player.angle=Math.atan2(fx,fz);
   }
 
-  /* ============================= STATE ============================= */
-  let canvas, ctx;
-  let state = 'start';
-  let round = 1;
-  let timeLeft = BASE_TIME;
-  let zones = [], obstacles = [], seekers = [];
-  let player = null;
-  let joyVec = {x:0,y:0};
-  let lastTs = 0;
-  let survivedMs = 0;
+  // Kamera folgt Spieler (Third-Person)
+  const camDist=4.5, camHeight=2.2;
+  const tx=player.x - Math.sin(cam.yaw)*camDist;
+  const tz=player.z - Math.cos(cam.yaw)*camDist;
+  cam.x += (tx-cam.x)*0.15;
+  cam.z += (tz-cam.z)*0.15;
+  cam.y += (player.y+camHeight-cam.y)*0.15;
+}
 
-  /* ============================= SCREEN ORIENTATION LOCK ============================= */
-  const rotateOverlay = document.getElementById('rotateOverlay');
-  function checkOrientation(){
-    if(window.innerHeight > window.innerWidth && (state === 'playing' || state === 'start')){
-      rotateOverlay.classList.add('show');
+// ---------- Zeichnen ----------
+function fillPoly(pts,color){
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.closePath();
+  ctx.fillStyle=color; ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.stroke();
+}
+
+function draw(){
+  // Himmel / Boden Hintergrund
+  ctx.fillStyle='#3a3f4a'; ctx.fillRect(0,0,W,H/2);
+  ctx.fillStyle='#2a2018'; ctx.fillRect(0,H/2,W,H/2);
+
+  // Boden-Quad
+  const g=2, fl=[];
+  const corners=[[-R,-R],[R,-R],[R,R],[-R,R]];
+  let ok=true;
+  const fpts=corners.map(([x,z])=>{const p=project(x,0,z); if(!p)ok=false; return p;});
+  if(ok) fillPoly(fpts,'#5a4a38');
+
+  // Wände (nach Distanz sortiert)
+  const drawList=[];
+  walls.forEach(w=>{
+    const mx=(w.x1+w.x2)/2, mz=(w.z1+w.z2)/2;
+    const d=Math.hypot(mx-cam.x, mz-cam.z);
+    drawList.push({type:'wall',w,d});
+  });
+  boxes.forEach(b=>{
+    const d=Math.hypot(b.x-cam.x, b.z-cam.z);
+    drawList.push({type:'box',b,d});
+  });
+  // Spieler in die Liste
+  drawList.push({type:'player',d:Math.hypot(player.x-cam.x,player.z-cam.z)});
+  drawList.sort((a,b)=>b.d-a.d);
+
+  drawList.forEach(item=>{
+    if(item.type==='wall'){
+      const w=item.w;
+      const p1=project(w.x1,0,w.z1), p2=project(w.x2,0,w.z2);
+      const p3=project(w.x2,w.h,w.z2), p4=project(w.x1,w.h,w.z1);
+      if(p1&&p2&&p3&&p4) fillPoly([p1,p2,p3,p4],w.color);
+    } else if(item.type==='box'){
+      const b=item.b, s=b.s;
+      // einfache Box: nur Vorderseite + Oberseite grob
+      const c=[
+        [b.x-s,0,b.z-s],[b.x+s,0,b.z-s],[b.x+s,0,b.z+s],[b.x-s,0,b.z+s],
+        [b.x-s,s*2,b.z-s],[b.x+s,s*2,b.z-s],[b.x+s,s*2,b.z+s],[b.x-s,s*2,b.z+s]
+      ].map(([x,y,z])=>project(x,y,z));
+      const faces=[[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7],[4,5,6,7]];
+      faces.forEach(f=>{
+        if(f.every(i=>c[i])) fillPoly(f.map(i=>c[i]), b.color);
+      });
     } else {
-      rotateOverlay.classList.remove('show');
-    }
-  }
-  window.addEventListener('resize', checkOrientation);
-  document.addEventListener('click', () => {
-    if(screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock('landscape').catch(() => {});
+      drawPlayer();
     }
   });
+}
 
-  /* ============================= RESIZE CANVAS ============================= */
-  function resizeMobile(){
-    const c = document.getElementById('gameCanvas');
-    const ratio = WORLD_W / WORLD_H;
+function drawPlayer(){
+  // Basis-Höhe je nach Pose
+  let cx=player.x, cz=player.z, cyBase=0;
+  let radius=0.55, squash=1;
+  if(player.pose===1){ radius=0.7; squash=0.6; }      // gekugelt
+  if(player.pose===2){ radius=0.55; squash=0.35; }    // liegend
 
-    let w = window.innerWidth;
-    let h = window.innerHeight;
+  const centerY = radius*squash + (player.pose===0?0.2:0);
+  const p=project(cx, centerY, cz);
+  if(!p) { playerScreen=null; return; }
+  const scr = radius/p.z*cam.fov;
 
-    if(w/h > ratio){
-      w = h * ratio;
-    }else{
-      h = w / ratio;
-    }
-    c.style.width = w+"px";
-    c.style.height = h+"px";
-  }
-  window.addEventListener('resize', resizeMobile);
+  // runder Körper (Ellipse für Pose)
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  const ry=scr*squash;
+  ctx.beginPath();
+  ctx.ellipse(0,0,scr,ry,0,0,Math.PI*2);
+  // Grundfarbe
+  ctx.fillStyle=player.color;
+  ctx.fill();
+  // Schattierung
+  const grad=ctx.createRadialGradient(-scr*0.3,-ry*0.3,scr*0.2,0,0,scr);
+  grad.addColorStop(0,'rgba(255,255,255,0.25)');
+  grad.addColorStop(1,'rgba(0,0,0,0.25)');
+  ctx.fillStyle=grad; ctx.fill();
 
-  /* ============================= SETUP LEVEL ============================= */
-  function buildLevel(r){
-    zones = [];
-    const zoneCount = 9;
-    for(let i=0;i<zoneCount;i++){
-      const w = rand(140,260), h = rand(110,220);
-      const x = rand(0, WORLD_W-w), y = rand(0, WORLD_H-h);
-      const colorIdx = 1 + Math.floor(Math.random()*(PALETTE.length-1));
-      zones.push({x,y,w,h,color:PALETTE[colorIdx].hex});
-    }
-
-    obstacles = [];
-    const obsCount = 7;
-    for(let i=0;i<obsCount;i++){
-      const w = rand(50,90), h = rand(50,90);
-      const x = rand(40, WORLD_W-40-w), y = rand(40, WORLD_H-40-h);
-      obstacles.push({x,y,w,h});
-    }
-
-    player = {
-      x: WORLD_W/2, y: WORLD_H/2,
-      colorIdx: 0,
-      camo: 0
-    };
-
-    for(const o of obstacles){
-      if(circleRectOverlap(player.x,player.y,PLAYER_RADIUS,o)){
-        player.x = WORLD_W*0.15; player.y = WORLD_H*0.15;
-      }
-    }
-
-    seekers = [];
-    const seekerCount = Math.min(3 + Math.floor((r-1)/2), 6);
-    for(let i=0;i<seekerCount;i++){
-      let sx,sy,tries=0;
-      do{
-        sx = rand(60, WORLD_W-60); sy = rand(60, WORLD_H-60);
-        tries++;
-      } while(tries<20 && (Math.hypot(sx-player.x, sy-player.y) < 260 || obstacles.some(o=>circleRectOverlap(sx,sy,20,o))));
-      seekers.push({
-        x:sx, y:sy, angle: rand(0,Math.PI*2),
-        target: randomWaypoint(),
-        patrolSpeed: rand(55,75) + r*3,
-        alertSpeed: rand(105,130) + r*4,
-        baseView: 235,
-        halfFov: 0.52,
-        detection: 0,
-        lastSeenX:0, lastSeenY:0, hasLastSeen:false
-      });
-    }
-
-    timeLeft = BASE_TIME + (r-1)*8;
-    survivedMs = 0;
-  }
-
-  function randomWaypoint(){
-    let x,y,tries=0;
-    do{
-      x = rand(50, WORLD_W-50); y = rand(50, WORLD_H-50); tries++;
-    } while(tries<15 && obstacles.some(o=>circleRectOverlap(x,y,24,o)));
-    return {x,y};
-  }
-
-  function circleRectOverlap(cx,cy,cr,rect){
-    const nx = clamp(cx, rect.x, rect.x+rect.w);
-    const ny = clamp(cy, rect.y, rect.y+rect.h);
-    const dx = cx-nx, dy = cy-ny;
-    return (dx*dx+dy*dy) < cr*cr;
-  }
-  function resolveCircleRect(c, rect){
-    const nx = clamp(c.x, rect.x, rect.x+rect.w);
-    const ny = clamp(c.y, rect.y, rect.y+rect.h);
-    let dx = c.x-nx, dy = c.y-ny;
-    let dist = Math.hypot(dx,dy);
-    if(dist === 0){ dx = 1; dy = 0; dist = 1; }
-    if(dist < PLAYER_RADIUS){
-      const push = (PLAYER_RADIUS-dist);
-      c.x += (dx/dist)*push;
-      c.y += (dy/dist)*push;
-    }
-  }
-
-  function segmentBlockedByObstacles(x1,y1,x2,y2){
-    const dist = Math.hypot(x2-x1,y2-y1);
-    const steps = Math.max(4, Math.floor(dist/14));
-    for(let i=1;i<steps;i++){
-      const t = i/steps;
-      const px = x1+(x2-x1)*t, py = y1+(y2-y1)*t;
-      for(const o of obstacles){
-        if(px>=o.x && px<=o.x+o.w && py>=o.y && py<=o.y+o.h) return true;
-      }
-    }
-    return false;
-  }
-
-  function currentZoneColor(x,y){
-    for(let i=zones.length-1;i>=0;i--){
-      const z = zones[i];
-      if(x>=z.x && x<=z.x+z.w && y>=z.y && y<=z.y+z.h) return z.color;
-    }
-    return PALETTE[0].hex;
-  }
-  function computeCamo(){
-    const groundHex = currentZoneColor(player.x, player.y);
-    const pc = hexToRgb(PALETTE[player.colorIdx].hex);
-    const gc = hexToRgb(groundHex);
-    const d = rgbDist(pc,gc) / MAX_RGB_DIST;
-    return clamp(1-d, 0, 1);
-  }
-
-  function selectColor(idx){
-    player.colorIdx = idx;
-    document.querySelectorAll('.swatch').forEach((el,i)=>{
-      el.classList.toggle('selected', i===idx);
-    });
-  }
-
-  function buildPalette(){
-    const wrap = document.getElementById('palette');
-    wrap.innerHTML = '';
-    PALETTE.forEach((p,i)=>{
-      const sw = document.createElement('div');
-      sw.className = 'swatch' + (i===0?' selected':'');
-      sw.style.background = p.hex;
-      sw.title = p.name;
-      sw.addEventListener('pointerdown', (e)=>{
-        e.stopPropagation();
-        selectColor(i);
-      });
-      wrap.appendChild(sw);
-    });
-  }
-
-  const joyBase = document.getElementById('joyBase');
-  const joyKnob = document.getElementById('joyKnob');
-  let joyActive = false, joyId = null, joyCenter = {x:0,y:0};
-  const MAX_JOY = 45;
-
-  document.getElementById('stage').addEventListener('pointerdown', e=>{
-    if(state !== 'playing') return;
-    if(e.target.closest('#palette')) return;
-    joyActive = true; joyId = e.pointerId;
-    const rect = joyBase.getBoundingClientRect();
-    joyCenter = {x: rect.left+rect.width/2, y: rect.top+rect.height/2};
-    updateJoy(e.clientX, e.clientY);
+  // Farbkleckse (Anmalen) innerhalb des Körpers
+  ctx.save();
+  ctx.clip();
+  player.paint.forEach(pt=>{
+    ctx.beginPath();
+    ctx.ellipse(pt.u*scr, pt.v*ry, pt.r*scr, pt.r*ry, 0, 0, Math.PI*2);
+    ctx.fillStyle=pt.c; ctx.fill();
   });
-  window.addEventListener('pointermove', e=>{
-    if(joyActive && e.pointerId===joyId) updateJoy(e.clientX,e.clientY);
-  });
-  window.addEventListener('pointerup', e=>{
-    if(joyActive && e.pointerId===joyId){
-      joyActive=false; joyVec={x:0,y:0};
-      joyKnob.style.transform = 'translate(0px,0px)';
-    }
-  });
-  window.addEventListener('pointercancel', e=>{
-    if(joyActive && e.pointerId===joyId){
-      joyActive=false; joyVec={x:0,y:0};
-      joyKnob.style.transform = 'translate(0px,0px)';
-    }
-  });
+  ctx.restore();
 
-  function updateJoy(cx,cy){
-    let dx = cx-joyCenter.x, dy = cy-joyCenter.y;
-    const d = Math.hypot(dx,dy);
-    if(d>MAX_JOY){ dx = dx/d*MAX_JOY; dy = dy/d*MAX_JOY; }
-    joyKnob.style.transform = `translate(${dx}px,${dy}px)`;
-    joyVec = {x: dx/MAX_JOY, y: dy/MAX_JOY};
+  // kleine Augen (nur wenn nicht liegend)
+  if(player.pose!==2){
+    ctx.fillStyle='#111';
+    ctx.beginPath(); ctx.arc(-scr*0.25,-ry*0.15,scr*0.09,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc( scr*0.25,-ry*0.15,scr*0.09,0,Math.PI*2); ctx.fill();
   }
 
-  function update(dt){
-    let mvx = joyVec.x, mvy = joyVec.y;
-    const mlen = Math.hypot(mvx,mvy);
-    if(mlen>0.001){
-      mvx/=Math.max(mlen,1); mvy/=Math.max(mlen,1);
-      const norm = Math.min(mlen,1);
-      player.x += mvx*PLAYER_SPEED*norm*dt;
-      player.y += mvy*PLAYER_SPEED*norm*dt;
-    }
-    player.x = clamp(player.x, PLAYER_RADIUS, WORLD_W-PLAYER_RADIUS);
-    player.y = clamp(player.y, PLAYER_RADIUS, WORLD_H-PLAYER_RADIUS);
-    for(const o of obstacles) resolveCircleRect(player, o);
+  // Rand
+  ctx.beginPath();
+  ctx.ellipse(0,0,scr,ry,0,0,Math.PI*2);
+  ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
 
-    player.camo = computeCamo();
-
-    let maxDetection = 0;
-    for(const s of seekers){
-      const dx = player.x-s.x, dy = player.y-s.y;
-      const dist = Math.hypot(dx,dy);
-      const angleToPlayer = Math.atan2(dy,dx);
-      const effRange = s.baseView * (0.28 + 0.72*(1-player.camo));
-      const angDiff = Math.abs(normAngle(angleToPlayer - s.angle));
-      let canSee = false;
-      if(dist < effRange && angDiff < s.halfFov){
-        if(!segmentBlockedByObstacles(s.x,s.y,player.x,player.y)) canSee = true;
-      }
-
-      if(canSee){
-        const closeness = clamp(1 - dist/effRange, 0.15, 1);
-        s.detection = clamp(s.detection + dt*(55*closeness+18), 0, DETECTION_MAX);
-        s.lastSeenX = player.x; s.lastSeenY = player.y; s.hasLastSeen = true;
-      } else {
-        s.detection = clamp(s.detection - dt*DETECTION_DECAY, 0, DETECTION_MAX);
-      }
-      maxDetection = Math.max(maxDetection, s.detection);
-
-      let tx, ty, spd;
-      if(s.detection > 4 && s.hasLastSeen){
-        tx = s.lastSeenX; ty = s.lastSeenY; spd = s.alertSpeed;
-      } else {
-        tx = s.target.x; ty = s.target.y; spd = s.patrolSpeed;
-        if(Math.hypot(tx-s.x, ty-s.y) < 18){ s.target = randomWaypoint(); }
-      }
-      const ddx = tx-s.x, ddy = ty-s.y;
-      const ddist = Math.hypot(ddx,ddy);
-      const desiredAngle = Math.atan2(ddy,ddx);
-      let da = normAngle(desiredAngle - s.angle);
-      const turnSpeed = canSee ? 3.2 : 2.2;
-      s.angle += clamp(da, -turnSpeed*dt, turnSpeed*dt);
-      if(ddist > 6){
-        s.x += Math.cos(s.angle)*spd*dt;
-        s.y += Math.sin(s.angle)*spd*dt;
-      }
-      s.x = clamp(s.x, 20, WORLD_W-20);
-      s.y = clamp(s.y, 20, WORLD_H-20);
-      const fake = {x:s.x,y:s.y};
-      for(const o of obstacles) resolveCircleRect(fake, o);
-      s.x = fake.x; s.y = fake.y;
-    }
-
-    updateHud(maxDetection);
-
-    if(maxDetection >= DETECTION_MAX){
-      endGame('lose');
-      return;
-    }
-
-    survivedMs += dt*1000;
-    timeLeft -= dt;
-    if(timeLeft <= 0){
-      endGame('win');
-      return;
-    }
+  // "geklebt an Wand" Anzeige
+  if(player.stuck){
+    ctx.fillStyle='rgba(60,200,120,0.9)';
+    ctx.font='bold 14px Arial'; ctx.textAlign='center';
+    ctx.fillText('🖐 GEKLEBT', p.x, p.y-ry-14);
   }
 
-  function updateHud(maxDetection){
-    document.getElementById('detectFill').style.width = maxDetection.toFixed(0)+'%';
-    document.getElementById('camoVal').textContent = Math.round(player.camo*100)+'%';
-    document.getElementById('camoVal').style.color = player.camo>0.6 ? '#6bcb77' : (player.camo>0.3 ? '#e0a72e' : '#ef5350');
-    document.getElementById('timerValue').textContent = Math.max(0,Math.ceil(timeLeft));
-    document.getElementById('roundVal').textContent = round;
-  }
+  playerScreen={x:p.x,y:p.y,r:Math.max(scr,ry)};
+}
 
-  function render(){
-    ctx.clearRect(0,0,WORLD_W,WORLD_H);
-    ctx.fillStyle = PALETTE[0].hex;
-    ctx.fillRect(0,0,WORLD_W,WORLD_H);
-
-    for(const z of zones){
-      ctx.fillStyle = z.color;
-      rrect(ctx, z.x, z.y, z.w, z.h, 18);
-      ctx.fill();
-    }
-
-    ctx.fillStyle = 'rgba(6,10,8,0.42)';
-    ctx.fillRect(0,0,WORLD_W,WORLD_H);
-
-    for(const s of seekers){
-      const grad = ctx.createRadialGradient(s.x,s.y,0, s.x,s.y, s.baseView);
-      const alert = s.detection>4;
-      grad.addColorStop(0, alert? 'rgba(239,83,80,0.30)':'rgba(255,244,190,0.24)');
-      grad.addColorStop(1, 'rgba(255,244,190,0.0)');
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(s.x,s.y);
-      ctx.arc(s.x,s.y, s.baseView, s.angle-s.halfFov, s.angle+s.halfFov);
-      ctx.closePath();
-      ctx.fillStyle = grad;
-      ctx.fill();
-      ctx.restore();
-    }
-
-    for(const o of obstacles){
-      ctx.fillStyle = '#3a352a';
-      rrect(ctx, o.x,o.y,o.w,o.h, 8);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth=2; ctx.stroke();
-    }
-
-    for(const s of seekers){
-      ctx.save();
-      ctx.translate(s.x,s.y);
-      ctx.rotate(s.angle);
-      ctx.fillStyle = s.detection>4 ? '#ef5350' : '#e7e2d3';
-      ctx.beginPath();
-      ctx.moveTo(14,0); ctx.lineTo(-10,8); ctx.lineTo(-10,-8); ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-      if(s.detection>0){
-        ctx.beginPath();
-        ctx.arc(s.x, s.y-22, 12, -Math.PI/2, -Math.PI/2 + Math.PI*2*(s.detection/DETECTION_MAX));
-        ctx.strokeStyle = s.detection>60 ? '#ef5350' : '#e0a72e';
-        ctx.lineWidth=3; ctx.stroke();
-      }
-    }
-
-    if(player){
-      const camoAlpha = 0.45 + 0.55*(1-player.camo);
-      ctx.save();
-      ctx.globalAlpha = camoAlpha;
-      ctx.fillStyle = PALETTE[player.colorIdx].hex;
-      ctx.beginPath();
-      ctx.arc(player.x, player.y, PLAYER_RADIUS, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-      ctx.beginPath();
-      ctx.arc(player.x, player.y, PLAYER_RADIUS, 0, Math.PI*2);
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = player.camo>0.6 ? '#6bcb77' : (player.camo>0.3 ? '#e0a72e' : '#ef5350');
-      ctx.stroke();
-      ctx.fillStyle = '#111';
-      ctx.beginPath();
-      ctx.arc(player.x+5, player.y-5, 2.4, 0, Math.PI*2);
-      ctx.fill();
-    }
-  }
-
-  function loop(ts){
-    if(!lastTs) lastTs = ts;
-    const dt = Math.min(0.05, (ts-lastTs)/1000);
-    lastTs = ts;
-    if(state==='playing'){
-      update(dt);
-      render();
-    }
-    requestAnimationFrame(loop);
-  }
-
-  function startGame(newRound){
-    round = newRound || 1;
-    buildLevel(round);
-    state = 'playing';
-    document.getElementById('startScreen').classList.add('hidden');
-    document.getElementById('resultScreen').classList.add('hidden');
-    document.getElementById('hud').classList.remove('hidden');
-    document.getElementById('palette').classList.remove('hidden');
-    selectColor(0);
-    render();
-    resizeMobile(); // Canvas beim Start sofort anpassen
-    checkOrientation();
-  }
-
-  function endGame(result){
-    state = result;
-    document.getElementById('hud').classList.add('hidden');
-    document.getElementById('palette').classList.add('hidden');
-    const rs = document.getElementById('resultScreen');
-    rs.classList.remove('hidden');
-    rs.classList.toggle('win', result==='win');
-    rs.classList.toggle('lose', result==='lose');
-    document.getElementById('resultTitle').textContent = result==='win' ? 'Überlebt!' : 'Erwischt!';
-    const secs = (survivedMs/1000).toFixed(1);
-    document.getElementById('resultStat').textContent =
-      result==='win'
-        ? `Runde ${round} geschafft — weiter zu Runde ${round+1}?`
-        : `Du hast ${secs}s überlebt, Runde ${round}`;
-    document.getElementById('retryBtn').textContent = result==='win' ? 'Nächste Runde' : 'Nochmal versuchen';
-    document.getElementById('retryBtn').onclick = ()=> startGame(result==='win' ? round+1 : round);
-  }
-
-  function init(){
-    canvas = document.getElementById('gameCanvas');
-    ctx = canvas.getContext('2d');
-    buildPalette();
-    document.getElementById('startBtn').addEventListener('click', ()=> startGame(1));
-    document.getElementById('menuBtn').addEventListener('click', ()=>{
-      document.getElementById('resultScreen').classList.add('hidden');
-      document.getElementById('startScreen').classList.remove('hidden');
-      state = 'start';
-    });
-    resizeMobile(); // Beim Initialisieren Canvas anpassen
-    requestAnimationFrame(loop);
-    checkOrientation();
-  }
-  init();
-})();
+// ---------- Loop ----------
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
+loop();
 </script>
 </body>
 </html>
