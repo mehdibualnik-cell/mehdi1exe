@@ -17,11 +17,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
-// Szene, Kamera, Renderer (3D Setup)
+// Szene, Kamera, Renderer
 const scene = new THREE.Scene();
-// Sonnenuntergangsfarben (wie auf deinem Bild)
-scene.background = new THREE.Color(0xff7f50); // Coral / Orange
-// Himmelblau Verlauf machen wir über Nebel, um das im Hintergrund zu simulieren
+scene.background = new THREE.Color(0xff7f50); // Sonnenuntergangs-Orange
 scene.fog = new THREE.Fog(0xff7f50, 20, 100);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -29,15 +27,14 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Beleuchtung
+// Licht
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
-const sunLight = new THREE.DirectionalLight(0xffff00, 0.8);
+const sunLight = new THREE.DirectionalLight(0xffcc88, 1.2);
 sunLight.position.set(-20, 10, 20);
 scene.add(sunLight);
 
-// --- Das Auto (Platzhalter, da ich kein 3D-Modell erstellen kann) ---
-// Hinweis: Wenn du das echte Aventador-Modell willst, lade ein GLTF von Sketchfab herunter und ersetze diesen Würfel.
+// --- Das Auto ---
 const carGroup = new THREE.Group();
 const carBody = new THREE.Mesh(
     new THREE.BoxGeometry(1, 0.4, 2),
@@ -45,8 +42,9 @@ const carBody = new THREE.Mesh(
 );
 carBody.position.y = 0.2;
 carGroup.add(carBody);
-// Mini-Räder für Optik
-const wheelMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+
+// Räder
+const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
 const wheelGeom = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 8);
 wheelGeom.rotateX(Math.PI / 2);
 const wheelPos = [[-0.6,0.1,0.8], [0.6,0.1,0.8], [-0.6,0.1,-0.8], [0.6,0.1,-0.8]];
@@ -58,55 +56,50 @@ wheelPos.forEach(pos => {
 carGroup.position.y = 0.3;
 scene.add(carGroup);
 
-// --- Die Unendliche Welt (Prozedurale Straßen und Berge) ---
+// --- Straße und Welt ---
 const roadLength = 30;
-const roadWidth = 4;
-const roadMat = new THREE.MeshLambertMaterial({ color: 0x444444 });
-const roadStrip = new THREE.MeshLambertMaterial({ color: 0xffff00 });
-const mountainMat = new THREE.MeshLambertMaterial({ color: 0x556b2f }); // Berge grün-braun
+const roadMat = new THREE.MeshLambertMaterial({ color: 0x666666 });
+const roadStrip = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+const mountainMat = new THREE.MeshLambertMaterial({ color: 0x6a8e6a });
 
-const segments = [];
-let spawnZ = -30;
+let spawnZ = 0; // KORRIGIERT: Straße beginnt bei 0 (direkt unter dem Auto)
 
 function addRoadSegment() {
-    // Boden
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, roadLength), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
+    // Boden (Gras/Hügel)
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(100, roadLength), new THREE.MeshLambertMaterial({ color: 0x3a5f3a }));
     ground.rotation.x = -Math.PI / 2;
     ground.position.z = spawnZ;
     scene.add(ground);
 
-    // Straße
-    const road = new THREE.Mesh(new THREE.PlaneGeometry(roadWidth, roadLength), roadMat);
+    // Straße (asphaltiert)
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(4, roadLength), roadMat);
     road.rotation.x = -Math.PI / 2;
     road.position.y = 0.02;
     road.position.z = spawnZ;
     scene.add(road);
 
-    // Berge (Zufällig links/rechts)
+    // Berge
     for(let side = -1; side <= 1; side+=2) {
         for(let i = 0; i < 3; i++) {
-            const mount = new THREE.Mesh(new THREE.ConeGeometry(2 + Math.random()*5, 2 + Math.random()*8, 6), mountainMat);
-            mount.position.x = side * (6 + Math.random()*15);
-            mount.position.z = spawnZ + (Math.random()*15 - 7.5);
-            mount.position.y = 1;
+            const mount = new THREE.Mesh(new THREE.ConeGeometry(3 + Math.random()*8, 2 + Math.random()*10, 6), mountainMat);
+            mount.position.x = side * (8 + Math.random()*20);
+            mount.position.z = spawnZ + (Math.random()*20 - 10);
+            mount.position.y = 2;
             scene.add(mount);
         }
     }
-
-    // Links- und Rechtskurven simulieren: wir verschieben den Pfad der Straße leicht (visuell)
-    // Hier vereinfacht: Wir lassen das Auto einfach lenken.
-    segments.push(spawnZ);
+    
     spawnZ -= roadLength;
 }
 
 // Erste Segmente generieren
-for(let i=0; i<25; i++) addRoadSegment();
+for(let i=0; i<20; i++) addRoadSegment();
 
-// --- Spiel-Schleife ---
+// --- Steuerung ---
 let speed = 0;
 let maxSpeed = 0.5;
-let acceleration = 0.01;
-let friction = 0.005;
+let acceleration = 0.02;
+let friction = 0.008;
 
 window.addEventListener('keydown', (e) => {
     if(e.key === 'ArrowUp') speed += acceleration;
@@ -115,39 +108,29 @@ window.addEventListener('keydown', (e) => {
     if(e.key === 'ArrowRight') carGroup.rotation.y -= 0.05;
 });
 
+// --- Game Loop ---
 function animate() {
     requestAnimationFrame(animate);
 
-    // Auto bewegen
     speed *= (1 - friction);
     if (speed > maxSpeed) speed = maxSpeed;
     if (speed < -maxSpeed/2) speed = -maxSpeed/2;
     
-    // Auto rollt vorwärts entlang seiner Blickrichtung (Rechtsverkehr Logik)
     const direction = new THREE.Vector3(0, 0, -1);
     direction.applyQuaternion(carGroup.quaternion);
     carGroup.position.add(direction.multiplyScalar(speed));
 
-    // Welt generieren (unendlich) und Kamera folgen
+    // Kamera immer hinter dem Auto
     camera.position.copy(carGroup.position);
-    camera.position.y += 3;
-    camera.position.z += 6;
+    camera.position.y += 4;
+    camera.position.z += 8;
     camera.lookAt(carGroup.position.x, carGroup.position.y, carGroup.position.z - 10);
-
-    // Neue Straßenabschnitte spawnen, alte löschen
-    while (carGroup.position.z - 100 > segments[segments.length - 1]) {
-        addRoadSegment();
-    }
-    // Entferne alte Objekte (über 150 hinter dem Auto)
-    // (Aus Platzgründen einfach gehalten: Wenn zu weit weg, entfernen, aber hier würde man eine Liste aller Meshes brauchen. 
-    // Für den Prototyp generiere ich einfach immer neue und lösche nicht, damit es nicht laggt -> 
-    // Achtung: Speicher wird irgendwann voll. Das ist jetzt eine "Proof-of-Concept"-Schleife!)
 
     renderer.render(scene, camera);
 }
 animate();
 
-// Fenster-Resize
+// Fenster-Größe anpassen
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
