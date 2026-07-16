@@ -3,28 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meccha Chameleon - Ultimate</title>
+    <title>Meccha Chameleon - Real Life</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; background: #111; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; background: #000; }
         
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; z-index: 10; }
+        /* --- STARTSEITE (LOADING SCREEN) --- */
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #1a1a1a; color: white; z-index: 100; padding: 20px; text-align: center; }
+        #start-screen h1 { font-size: 36px; color: #f1c40f; text-shadow: 0 0 20px rgba(241, 196, 15, 0.4); margin-bottom: 20px; }
+        #start-screen p { font-size: 16px; opacity: 0.8; max-width: 300px; margin-bottom: 30px; }
+        
+        .load-btn { padding: 18px 40px; font-size: 20px; font-weight: bold; border: none; border-radius: 30px; background: linear-gradient(135deg, #00b894, #00cec9); color: white; box-shadow: 0 10px 30px rgba(0, 206, 201, 0.4); cursor: pointer; transition: transform 0.2s; margin-top: 10px; }
+        .load-btn:active { transform: scale(0.95); }
+        
+        #file-input { display: none; }
+        #loading-text { display: none; margin-top: 20px; color: #f1c40f; font-weight: bold; }
+
+        /* --- GAME UI --- */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; flex-direction: column; z-index: 10; }
         
         #top-bar { display: flex; justify-content: space-between; padding: 15px; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); pointer-events: none; }
         #status { font-size: 14px; padding: 6px 14px; background: rgba(0,0,0,0.7); border-radius: 20px; color: #4cd137; border: 1px solid rgba(255,255,255,0.1); }
         #timer { font-size: 24px; font-weight: bold; color: #4cd137; text-shadow: 0 0 10px rgba(76, 209, 55, 0.3); }
         #timer.danger { color: #e74c3c; }
 
-        /* Pose Menu Button */
+        /* Pose Button */
         #pose-menu-btn { position: absolute; top: 80px; right: 20px; width: 60px; height: 60px; border-radius: 50%; border: 2px solid white; background: rgba(0,0,0,0.8); color: white; font-size: 24px; pointer-events: auto; cursor: pointer; z-index: 20; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
         #pose-menu-btn:active { transform: scale(0.85); }
 
-        /* Pose Dropdown Menu */
         #pose-menu { position: absolute; top: 150px; right: 20px; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); border-radius: 15px; padding: 15px; border: 1px solid rgba(255,255,255,0.2); pointer-events: auto; display: none; flex-direction: column; gap: 10px; z-index: 20; min-width: 120px; }
         #pose-menu.open { display: flex; }
         .pose-opt { background: rgba(255,255,255,0.1); border: none; color: white; padding: 12px; border-radius: 10px; font-size: 16px; cursor: pointer; transition: 0.1s; }
         .pose-opt:active { background: rgba(255,255,255,0.3); transform: scale(0.95); }
 
-        /* Steuerung */
+        /* Joystick & Paint */
         #bottom-area { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; pointer-events: none; }
         #joystick-area { width: 130px; height: 130px; background: radial-gradient(circle, rgba(255,255,255,0.15), transparent); border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); pointer-events: auto; display: flex; justify-content: center; align-items: center; }
         #joystick-inner { width: 45px; height: 45px; background: rgba(255,255,255,0.5); border-radius: 50%; pointer-events: none; transition: all 0.05s; }
@@ -37,16 +48,21 @@
         
         #paint-mode { width: 45px; height: 45px; border-radius: 50%; border: none; background: #e74c3c; color: white; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; transition: 0.1s; pointer-events: auto; }
         #paint-mode.active { background: #4cd137; }
-
-        /* Multiplayer & Info */
-        #mp-info { position: absolute; bottom: 180px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 10px; color: #f1c40f; font-size: 12px; pointer-events: none; text-align: center; display: none; border: 1px solid rgba(255,255,255,0.1); }
     </style>
-    <!-- Three.js & PeerJS (für Multiplayer) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
 <body>
 
+    <!-- STARTSEITE -->
+    <div id="start-screen">
+        <h1>🏠 MECCHA<br>CHAMELEON</h1>
+        <p>Lade ein Foto von deinem Zimmer (Regal, TV, Sofa), um die Map zu erstellen!</p>
+        <button class="load-btn" id="load-room-btn">📸 Foto auswählen</button>
+        <input type="file" id="file-input" accept="image/*">
+        <div id="loading-text">🔄 Bild wird geladen...</div>
+    </div>
+
+    <!-- GAME UI -->
     <div id="ui-layer">
         <div id="top-bar">
             <div id="status">🟢 Tarnen</div>
@@ -77,131 +93,206 @@
                 </div>
             </div>
         </div>
-        
-        <div id="mp-info">📡 Host gestartet. Teilen Sie diesen Code mit Freunden: <span id="mp-code" style="font-weight:bold; color:#fff;"></span></div>
     </div>
 
     <script>
-        // --- 1. SZENE (3D) ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x34495e); // Dunklerer Hintergrund
+        // --- START LOGIK ---
+        const startScreen = document.getElementById('start-screen');
+        const uiLayer = document.getElementById('ui-layer');
+        const fileInput = document.getElementById('file-input');
+        const loadBtn = document.getElementById('load-room-btn');
+        const loadingText = document.getElementById('loading-text');
 
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        let scene, camera, renderer, player, aiGroup;
+        let moveX = 0, moveY = 0;
+        let isGameActive = true;
+        let timeLeft = 90;
+        let isPainting = false;
+        let currentColor = '#e74c3c';
 
-        // Licht
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight.position.set(10, 20, 10);
-        scene.add(dirLight);
+        loadBtn.addEventListener('click', () => fileInput.click());
 
-        // --- 2. RIESIGE MAP (20x20 Einheiten) ---
-        // Boden mit Raster
-        const canvas = document.createElement('canvas');
-        canvas.width = 512; canvas.height = 512;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#7f8c8d'; ctx.fillRect(0,0,512,512);
-        ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 4;
-        for(let i=0; i<512; i+=64) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,512); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(512,i); ctx.stroke(); }
-        const tex = new THREE.CanvasTexture(canvas);
-        
-        const floor = new THREE.Mesh(
-            new THREE.PlaneGeometry(40, 40),
-            new THREE.MeshStandardMaterial({ map: tex })
-        );
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = -0.5;
-        scene.add(floor);
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                loadingText.style.display = 'block';
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = () => {
+                        startScreen.style.display = 'none';
+                        uiLayer.style.display = 'flex';
+                        loadingText.style.display = 'none';
+                        initGame(img);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
-        // Ein paar Häuser/Blöcke zum Verstecken
-        const blockMat = new THREE.MeshStandardMaterial({ color: 0xe67e22 });
-        const blockMat2 = new THREE.MeshStandardMaterial({ color: 0x2980b9 });
-        for(let i=0; i<8; i++) {
-            const block = new THREE.Mesh(
-                new THREE.BoxGeometry(2, 3 + Math.random()*2, 2),
-                i%2===0 ? blockMat : blockMat2
-            );
-            block.position.set((Math.random()-0.5)*30, 1, (Math.random()-0.5)*30);
-            scene.add(block);
+        // --- SPIEL INITIALISIEREN MIT FOTO ---
+        function initGame(roomImage) {
+            // 1. Szene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111111);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+            renderer = new THREE.WebGLRenderer({ antialias: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // 2. Das echte Foto als riesige Wand (Realistischer Look)
+            const texture = new THREE.Texture(roomImage);
+            texture.minFilter = THREE.LinearFilter;
+            
+            // Riesige Box, die das Zimmer umschließt
+            const roomMat = new THREE.MeshStandardMaterial({ map: texture, side: THREE.BackSide });
+            const room = new THREE.Mesh(new THREE.BoxGeometry(40, 20, 40), roomMat);
+            room.position.y = 5;
+            scene.add(room);
+
+            // 3. Licht (Damit die Figur sichtbar ist)
+            const light = new THREE.AmbientLight(0xffffff, 1.5);
+            scene.add(light);
+
+            // 4. Der Spieler
+            player = new THREE.Group();
+            player.position.set(0, 1.5, 5);
+            scene.add(player);
+            createPlayer();
+
+            // 5. KI (Der Sucher)
+            aiGroup = new THREE.Group();
+            aiGroup.position.set(0, 1.5, -5);
+            scene.add(aiGroup);
+            createAI();
+
+            // 6. Timer starten
+            startTimer();
+
+            // 7. Event Listeners für Steuerung
+            setupControls();
+            
+            // 8. Loop starten
+            animate();
         }
 
-        // --- 3. SPIELER FIGUR (HIDER) ---
-        const player = new THREE.Group();
-        player.position.set(0, 0, 5);
-        scene.add(player);
+        function createPlayer() {
+            const pMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 8), pMat);
+            body.position.y = 0.6; body.name = "body";
+            player.add(body);
+            
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 10), pMat);
+            head.position.y = 1.4; head.name = "head";
+            player.add(head);
+            
+            const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.6, 6), pMat);
+            armL.position.set(-0.6, 0.9, 0); armL.name = "armL";
+            player.add(armL);
+            
+            const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.6, 6), pMat);
+            armR.position.set(0.6, 0.9, 0); armR.name = "armR";
+            player.add(armR);
+            
+            const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.6, 6), pMat);
+            legL.position.set(-0.2, 0.3, 0); legL.name = "legL";
+            player.add(legL);
+            
+            const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.6, 6), pMat);
+            legR.position.set(0.2, 0.3, 0); legR.name = "legR";
+            player.add(legR);
+        }
 
-        const pMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 8), pMat);
-        body.position.y = 0.6;
-        player.add(body);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 10), pMat);
-        head.position.y = 1.4;
-        player.add(head);
-        const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.6, 6), pMat);
-        armL.position.set(-0.6, 0.9, 0);
-        player.add(armL);
-        const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.6, 6), pMat);
-        armR.position.set(0.6, 0.9, 0);
-        player.add(armR);
-        const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.6, 6), pMat);
-        legL.position.set(-0.2, 0.3, 0);
-        player.add(legL);
-        const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.6, 6), pMat);
-        legR.position.set(0.2, 0.3, 0);
-        player.add(legR);
+        function createAI() {
+            const aiMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c });
+            const aiBody = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1, 8), aiMat);
+            aiBody.position.y = 0.6;
+            aiGroup.add(aiBody);
+            const aiHead = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 10), aiMat);
+            aiHead.position.y = 1.4;
+            aiGroup.add(aiHead);
+        }
 
-        // --- 4. KI SEEKER (Der Gegner) ---
-        const aiGroup = new THREE.Group();
-        aiGroup.position.set(-5, 0, -5);
-        scene.add(aiGroup);
-        
-        const aiMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c }); // Roter Gegner
-        const aiBody = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.2, 8), aiMat);
-        aiBody.position.y = 0.6;
-        aiGroup.add(aiBody);
-        const aiHead = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 10), aiMat);
-        aiHead.position.y = 1.4;
-        aiGroup.add(aiHead);
+        // --- TIMER ---
+        function startTimer() {
+            const timerDisplay = document.getElementById('timer');
+            const statusDisplay = document.getElementById('status');
+            setInterval(() => {
+                if(timeLeft > 0) {
+                    timeLeft--;
+                    timerDisplay.innerText = timeLeft + "s";
+                    if(timeLeft <= 10) timerDisplay.classList.add('danger');
+                } else {
+                    isGameActive = false;
+                    statusDisplay.innerText = "🔴 Gewonnen!";
+                }
+            }, 1000);
+        }
 
-        // KI Logik (Läuft zufällig umher)
-        let aiTargetX = (Math.random()-0.5)*30;
-        let aiTargetZ = (Math.random()-0.5)*30;
-        let aiSpeed = 0.05;
+        // --- STEURUNG ---
+        function setupControls() {
+            // Joystick
+            const jArea = document.getElementById('joystick-area');
+            const jInner = document.getElementById('joystick-inner');
+            jArea.addEventListener('touchstart', (e) => handleJoy(e, jArea, jInner), {passive: false});
+            jArea.addEventListener('touchmove', (e) => handleJoy(e, jArea, jInner), {passive: false});
+            jArea.addEventListener('touchend', () => { moveX = 0; moveY = 0; jInner.style.transform = 'translate(0,0)'; });
 
-        // --- 5. SPIELLOGIK & STEURUNG ---
-        let timeLeft = 90;
-        let isGameActive = true;
-        const timerDisplay = document.getElementById('timer');
-        const statusDisplay = document.getElementById('status');
+            // Posen
+            const menuBtn = document.getElementById('pose-menu-btn');
+            const menu = document.getElementById('pose-menu');
+            menuBtn.addEventListener('click', () => menu.classList.toggle('open'));
 
-        setInterval(() => {
-            if(timeLeft > 0) {
-                timeLeft--;
-                timerDisplay.innerText = timeLeft + "s";
-                if(timeLeft <= 10) timerDisplay.classList.add('danger');
-            } else {
-                isGameActive = false;
-                statusDisplay.innerText = "🔴 Zeit abgelaufen! Du hast gewonnen!";
-                document.getElementById('pose-menu-btn').style.display = 'none';
-            }
-        }, 1000);
+            document.querySelectorAll('.pose-opt').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    menu.classList.remove('open');
+                    const pose = btn.dataset.pose;
+                    const armL = player.children.find(c => c.name === "armL");
+                    const armR = player.children.find(c => c.name === "armR");
+                    const body = player.children.find(c => c.name === "body");
+                    const head = player.children.find(c => c.name === "head");
+                    player.rotation.x = 0;
 
-        // --- 6. JOYSTICK & LAUFEN ---
-        let moveX = 0, moveY = 0;
-        const jArea = document.getElementById('joystick-area');
-        const jInner = document.getElementById('joystick-inner');
-        
-        jArea.addEventListener('touchstart', (e) => handleJoy(e), {passive: false});
-        jArea.addEventListener('touchmove', (e) => handleJoy(e), {passive: false});
-        jArea.addEventListener('touchend', () => { moveX = 0; moveY = 0; jInner.style.transform = 'translate(0,0)'; });
+                    if(pose === 'hands_up') { armL.rotation.x = -1.5; armR.rotation.x = 1.5; }
+                    else if(pose === 'lie') { player.rotation.x = Math.PI/2; }
+                    else if(pose === 'squat') { body.position.y = 0.2; head.position.y = 0.9; armL.rotation.x = 0.5; armR.rotation.x = -0.5; }
+                    else { body.position.y = 0.6; head.position.y = 1.4; armL.rotation.x = 0; armR.rotation.x = 0; }
+                });
+            });
 
-        function handleJoy(e) {
+            // Malen
+            const paintBtn = document.getElementById('paint-mode');
+            const colorBtns = document.querySelectorAll('.color-btn');
+            colorBtns.forEach(b => b.addEventListener('click', () => {
+                colorBtns.forEach(x => x.classList.remove('selected'));
+                b.classList.add('selected');
+                currentColor = b.dataset.color;
+            }));
+            paintBtn.addEventListener('click', () => {
+                isPainting = !isPainting;
+                paintBtn.classList.toggle('active');
+            });
+
+            // Tippen zum Anmalen
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            document.addEventListener('touchstart', (e) => {
+                if(!isPainting || !isGameActive) return;
+                const touch = e.changedTouches[0];
+                mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const hits = raycaster.intersectObjects(player.children);
+                if(hits.length > 0) hits[0].object.material.color.set(currentColor);
+            }, {passive: false});
+        }
+
+        function handleJoy(e, area, inner) {
             e.preventDefault();
             const touch = e.touches[0];
-            const rect = jArea.getBoundingClientRect();
+            const rect = area.getBoundingClientRect();
             let dx = touch.clientX - (rect.left + rect.width/2);
             let dy = touch.clientY - (rect.top + rect.height/2);
             const dist = Math.sqrt(dx*dx + dy*dy);
@@ -209,166 +300,56 @@
             if (dist > max) { dx = (dx/dist)*max; dy = (dy/dist)*max; }
             moveX = dx / max;
             moveY = dy / max;
-            jInner.style.transform = `translate(${dx}px, ${dy}px)`;
+            inner.style.transform = `translate(${dx}px, ${dy}px)`;
         }
 
-        // --- 7. POSEN MENÜ ---
-        const menuBtn = document.getElementById('pose-menu-btn');
-        const menu = document.getElementById('pose-menu');
-        menuBtn.addEventListener('click', () => menu.classList.toggle('open'));
-
-        document.querySelectorAll('.pose-opt').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if(!isGameActive) return;
-                menu.classList.remove('open');
-                const pose = btn.dataset.pose;
-                if(pose === 'hands_up') { armL.rotation.x = -1.5; armR.rotation.x = 1.5; }
-                else if(pose === 'lie') { player.rotation.x = Math.PI/2; }
-                else if(pose === 'squat') { body.position.y = 0.2; head.position.y = 0.9; armL.rotation.x = 0.5; armR.rotation.x = -0.5; }
-                else { player.rotation.x = 0; body.position.y = 0.6; head.position.y = 1.4; armL.rotation.x = 0; armR.rotation.x = 0; }
-            });
-        });
-
-        // --- 8. KAMERA STEUERUNG (Zwei Finger Wischen) ---
-        let camRotX = 0.5; // Vertikaler Winkel
-        let camRotY = 0;   // Horizontaler Winkel
-        let lastTouchX = 0, lastTouchY = 0;
-
-        document.addEventListener('touchstart', (e) => {
-            if(e.touches.length === 2) { // Zwei Finger auf dem Bildschirm
-                lastTouchX = e.touches[0].clientX;
-                lastTouchY = e.touches[0].clientY;
-            }
-        }, {passive: true});
-
-        document.addEventListener('touchmove', (e) => {
-            if(e.touches.length === 2 && isGameActive) {
-                const dx = e.touches[0].clientX - lastTouchX;
-                const dy = e.touches[0].clientY - lastTouchY;
-                camRotY -= dx * 0.01;
-                camRotX -= dy * 0.01;
-                camRotX = Math.max(0.1, Math.min(1.2, camRotX)); // Nicht zu weit runter oder hoch
-                lastTouchX = e.touches[0].clientX;
-                lastTouchY = e.touches[0].clientY;
-            }
-        }, {passive: true});
-
-        // --- 9. MULTIPLAYER SETUP (Lokaler Host) ---
-        // Starte PeerJS als Host
-        const peer = new Peer(null, { debug: 2 });
-        const mpInfo = document.getElementById('mp-info');
-        const mpCode = document.getElementById('mp-code');
-
-        peer.on('open', (id) => {
-            mpInfo.style.display = 'block';
-            mpCode.innerText = id;
-        });
-
-        // Wenn jemand beitritt
-        let conn = null;
-        peer.on('connection', (c) => {
-            conn = c;
-            mpCode.innerText = "Verbunden!";
-            c.on('data', (data) => {
-                // Position des Freundes empfangen und anzeigen (Hier nur Platzhalter)
-                console.log("Freund bewegt sich:", data);
-            });
-        });
-
-        // --- 10. MAL-FUNKTION (Tippen auf Körperteile) ---
-        let isPainting = false;
-        let currentColor = '#e74c3c';
-        const paintBtn = document.getElementById('paint-mode');
-        const colorBtns = document.querySelectorAll('.color-btn');
-
-        colorBtns.forEach(b => b.addEventListener('click', () => {
-            colorBtns.forEach(x => x.classList.remove('selected'));
-            b.classList.add('selected');
-            currentColor = b.dataset.color;
-        }));
-
-        paintBtn.addEventListener('click', () => {
-            if(!isGameActive) return;
-            isPainting = !isPainting;
-            paintBtn.classList.toggle('active');
-        });
-
-        // Raycaster zum Tippen auf die Figur
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        document.addEventListener('touchstart', (e) => {
-            if(!isPainting || !isGameActive) return;
-            const touch = e.changedTouches[0];
-            mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            const hits = raycaster.intersectObjects([body, head, armL, armR, legL, legR]);
-            if(hits.length > 0) hits[0].object.material.color.set(currentColor);
-        }, {passive: false});
-
-        // --- 11. GAME LOOP ---
+        // --- GAME LOOP ---
+        let aiTargetX = 0, aiTargetZ = 0;
         function animate() {
             requestAnimationFrame(animate);
 
             if(isGameActive) {
-                // Spieler bewegen
-                const speed = 0.08;
-                player.position.x += moveX * speed;
-                player.position.z += moveY * speed;
-                player.position.x = Math.max(-18, Math.min(18, player.position.x));
-                player.position.z = Math.max(-18, Math.min(18, player.position.z));
+                // Player bewegen
+                player.position.x += moveX * 0.08;
+                player.position.z += moveY * 0.08;
 
-                // KI bewegen (einfache Wegpunkt-Navigation)
+                // KI bewegt sich auf zufällige Ziele
+                if(Math.random() < 0.01) {
+                    aiTargetX = (Math.random()-0.5)*30;
+                    aiTargetZ = (Math.random()-0.5)*30;
+                }
                 const dx = aiTargetX - aiGroup.position.x;
                 const dz = aiTargetZ - aiGroup.position.z;
                 const dist = Math.sqrt(dx*dx + dz*dz);
-                if(dist < 0.5) {
-                    aiTargetX = (Math.random()-0.5)*30;
-                    aiTargetZ = (Math.random()-0.5)*30;
-                } else {
-                    aiGroup.position.x += (dx/dist) * aiSpeed;
-                    aiGroup.position.z += (dz/dist) * aiSpeed;
+                if(dist > 0.5) {
+                    aiGroup.position.x += (dx/dist) * 0.04;
+                    aiGroup.position.z += (dz/dist) * 0.04;
                 }
 
-                // KI Kollision mit Spieler (Du wurdest gefunden)
-                const distToPlayer = player.position.distanceTo(aiGroup.position);
-                if(distToPlayer < 1.0) {
+                // KI erwischt dich?
+                if(player.position.distanceTo(aiGroup.position) < 1.0) {
                     isGameActive = false;
-                    statusDisplay.innerText = "💀 KI hat dich gefunden! Verloren!";
-                    timerDisplay.innerText = "GAME OVER";
-                    timerDisplay.style.color = "#e74c3c";
-                    document.getElementById('pose-menu-btn').style.display = 'none';
-                    moveX = 0; moveY = 0;
+                    document.getElementById('status').innerText = "💀 Verloren!";
+                    document.getElementById('timer').innerText = "GAME OVER";
                 }
 
-                // Multiplayer: Sende Position an Freund
-                if(conn && conn.open) {
-                    conn.send({x: player.position.x, z: player.position.z});
-                }
+                // Kamera (folgt dem Spieler nah)
+                camera.position.x = player.position.x;
+                camera.position.z = player.position.z + 5;
+                camera.position.y = 3.5;
+                camera.lookAt(player.position.x, player.position.y + 0.5, player.position.z);
             }
-
-            // --- KAMERA UPDATE ---
-            // Berechne die Position der Kamera basierend auf Winkeln
-            const camDist = 8;
-            const xOffset = Math.sin(camRotY) * Math.cos(camRotX) * camDist;
-            const yOffset = Math.sin(camRotX) * camDist;
-            const zOffset = Math.cos(camRotY) * Math.cos(camRotX) * camDist;
-
-            camera.position.x = player.position.x + xOffset;
-            camera.position.y = player.position.y + yOffset + 1.5;
-            camera.position.z = player.position.z + zOffset;
-            
-            camera.lookAt(player.position.x, player.position.y + 0.5, player.position.z);
 
             renderer.render(scene, camera);
         }
-        animate();
 
-        // Fenster resize
+        // Resize
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            if(camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
         });
     </script>
 </body>
