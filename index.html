@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Straßenfußball - Street Kick</title>
+    <title>Straßenfußball – Street Kick</title>
     <style>
         :root {
             --safe-bottom: env(safe-area-inset-bottom, 20px);
@@ -53,7 +53,7 @@
             border-radius: 8px;
         }
 
-        /* Overlay für UI */
+        /* UI Overlay */
         #uiLayer {
             position: absolute;
             top: 0;
@@ -240,7 +240,6 @@
             background: radial-gradient(circle at 40% 35%, #ffcc00, #ff6d00);
         }
 
-        /* Responsive Anpassungen */
         @media (max-width: 380px) {
             #joystickZone {
                 width: 110px;
@@ -275,7 +274,6 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
 
-        <!-- Scoreboard -->
         <div id="scoreBoard">
             <div class="scoreBox">
                 <div class="scoreLabel">Du</div>
@@ -288,13 +286,11 @@
             </div>
         </div>
 
-        <!-- Nachrichten -->
         <div id="messageBox">
             <div id="messageText">TOR!</div>
             <div id="messageSub"></div>
         </div>
 
-        <!-- Touch Steuerung -->
         <div id="touchControls">
             <div id="joystickZone">
                 <div id="joystickBase"></div>
@@ -309,15 +305,12 @@
 
     <script>
         (function() {
-            // ──────────────────────────────────────
-            // CANVAS & KONTEXT
-            // ──────────────────────────────────────
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
             const container = document.getElementById('gameContainer');
 
             let W, H;
-            const scale = 2; // für schärfere Grafik
+            const scale = 2;
 
             function resizeCanvas() {
                 const rect = container.getBoundingClientRect();
@@ -340,108 +333,80 @@
                 }, 300);
             });
 
-            // ──────────────────────────────────────
-            // SPIELFELD DIMENSIONEN
-            // ──────────────────────────────────────
+            // ──────────── SPIELFELD (GRÖSSER) ────────────
             let fieldX, fieldY, fieldW, fieldH;
             let goalWidth, goalDepth;
             let wallThickness;
 
             function updateFieldDimensions() {
-                fieldW = W * 0.88;
-                fieldH = H * 0.78;
+                // Feld nimmt jetzt mehr Platz ein
+                fieldW = W * 0.94;
+                fieldH = H * 0.84;
                 fieldX = (W - fieldW) / 2;
-                fieldY = (H - fieldH) / 2 + H * 0.02;
-                goalWidth = fieldW * 0.28;
-                goalDepth = fieldW * 0.08;
-                wallThickness = W * 0.025;
+                fieldY = (H - fieldH) / 2 + H * 0.01;
+                goalWidth = fieldW * 0.26;
+                goalDepth = fieldW * 0.07;
+                wallThickness = W * 0.022;
             }
             updateFieldDimensions();
 
-            // ──────────────────────────────────────
-            // SPIELZUSTAND
-            // ──────────────────────────────────────
+            // ──────────── SPIELZUSTAND ────────────
             let scorePlayer = 0;
             let scoreEnemy = 0;
             let gamePaused = false;
             let pauseTimer = 0;
             let messageActive = false;
             let messageTimer = 0;
-            let currentMessage = '';
-            let currentSubMessage = '';
 
-            // ──────────────────────────────────────
-            // SPIELER
-            // ──────────────────────────────────────
             const player = {
-                x: 0,
-                y: 0,
-                radius: 16,
-                speed: 0,
+                x: 0, y: 0,
+                radius: 14,
                 maxSpeed: 180,
-                sprintMultiplier: 1.6,
-                vx: 0,
-                vy: 0,
+                sprintMultiplier: 1.55,
+                vx: 0, vy: 0,
                 color: '#4fc3f7',
                 darkColor: '#0277bd',
-                team: 'player',
                 sprinting: false,
                 shootCooldown: 0,
-                kickPower: 500,
+                kickPower: 480,
             };
 
             const enemy = {
-                x: 0,
-                y: 0,
-                radius: 16,
-                speed: 0,
-                maxSpeed: 140,
-                sprintMultiplier: 1.5,
-                vx: 0,
-                vy: 0,
+                x: 0, y: 0,
+                radius: 14,
+                maxSpeed: 135,
+                sprintMultiplier: 1.45,
+                vx: 0, vy: 0,
                 color: '#ef5350',
                 darkColor: '#b71c1c',
-                team: 'enemy',
                 sprinting: false,
                 shootCooldown: 0,
-                kickPower: 460,
-                aiTargetX: 0,
-                aiTargetY: 0,
-                aiState: 'chase', // 'chase', 'defend', 'attack'
+                kickPower: 360,
+                aiState: 'chase',
                 aiTimer: 0,
+                aiStuckTimer: 0,
             };
 
-            // ──────────────────────────────────────
-            // BALL
-            // ──────────────────────────────────────
             const ball = {
-                x: 0,
-                y: 0,
-                radius: 10,
-                vx: 0,
-                vy: 0,
+                x: 0, y: 0,
+                radius: 9,
+                vx: 0, vy: 0,
                 friction: 0.94,
-                bounceDamping: 0.65,
+                bounceDamping: 0.6,
                 color: '#ffffff',
-                shadowColor: '#888888',
                 trail: [],
                 maxTrail: 8,
             };
 
-            // ──────────────────────────────────────
-            // TORE
-            // ──────────────────────────────────────
-            const goalPlayer = { x: 0, y: 0, w: 0, h: 0 }; // Spieler verteidigt dieses Tor (unten)
-            const goalEnemy = { x: 0, y: 0, w: 0, h: 0 }; // Gegner verteidigt dieses Tor (oben)
+            const goalPlayer = { x: 0, y: 0, w: 0, h: 0 };
+            const goalEnemy = { x: 0, y: 0, w: 0, h: 0 };
 
             function updateGoalPositions() {
-                // Spieler-Tor (unten) - Gegner schießt hier rein
                 goalPlayer.x = fieldX + fieldW / 2 - goalWidth / 2;
                 goalPlayer.y = fieldY + fieldH - wallThickness;
                 goalPlayer.w = goalWidth;
                 goalPlayer.h = goalDepth;
 
-                // Gegner-Tor (oben) - Spieler schießt hier rein
                 goalEnemy.x = fieldX + fieldW / 2 - goalWidth / 2;
                 goalEnemy.y = fieldY - goalDepth + wallThickness;
                 goalEnemy.w = goalWidth;
@@ -449,9 +414,6 @@
             }
             updateGoalPositions();
 
-            // ──────────────────────────────────────
-            // PARTIKEL
-            // ──────────────────────────────────────
             let particles = [];
 
             function spawnParticles(x, y, count, color, spread) {
@@ -459,8 +421,7 @@
                     const angle = Math.random() * Math.PI * 2;
                     const speed = Math.random() * spread + spread * 0.3;
                     particles.push({
-                        x: x,
-                        y: y,
+                        x, y,
                         vx: Math.cos(angle) * speed,
                         vy: Math.sin(angle) * speed,
                         life: 1,
@@ -495,13 +456,8 @@
                 }
             }
 
-            // ──────────────────────────────────────
-            // HILFSFUNKTIONEN
-            // ──────────────────────────────────────
             function dist(a, b) {
-                const dx = a.x - b.x;
-                const dy = a.y - b.y;
-                return Math.sqrt(dx * dx + dy * dy);
+                return Math.hypot(a.x - b.x, a.y - b.y);
             }
 
             function clamp(val, min, max) {
@@ -509,42 +465,37 @@
             }
 
             function resetPositions() {
-                const centerX = fieldX + fieldW / 2;
-                const centerY = fieldY + fieldH / 2;
-
-                player.x = centerX;
-                player.y = centerY + fieldH * 0.25;
-                player.vx = 0;
-                player.vy = 0;
+                const cx = fieldX + fieldW / 2;
+                const cy = fieldY + fieldH / 2;
+                player.x = cx;
+                player.y = cy + fieldH * 0.25;
+                player.vx = player.vy = 0;
                 player.sprinting = false;
                 player.shootCooldown = 0;
 
-                enemy.x = centerX;
-                enemy.y = centerY - fieldH * 0.25;
-                enemy.vx = 0;
-                enemy.vy = 0;
+                enemy.x = cx;
+                enemy.y = cy - fieldH * 0.25;
+                enemy.vx = enemy.vy = 0;
                 enemy.sprinting = false;
-                enemy.shootCooldown = 0;
+                enemy.shootCooldown = 1.5;
                 enemy.aiState = 'chase';
                 enemy.aiTimer = 0;
+                enemy.aiStuckTimer = 0;
 
-                ball.x = centerX;
-                ball.y = centerY;
-                ball.vx = (Math.random() - 0.5) * 100;
-                ball.vy = (Math.random() - 0.5) * 100;
+                ball.x = cx;
+                ball.y = cy;
+                ball.vx = (Math.random() - 0.5) * 80;
+                ball.vy = (Math.random() - 0.5) * 80;
                 ball.trail = [];
-
                 particles = [];
             }
 
             function showMessage(msg, sub = '', duration = 2.0) {
-                currentMessage = msg;
-                currentSubMessage = sub;
-                messageActive = true;
-                messageTimer = duration;
                 document.getElementById('messageText').textContent = msg;
                 document.getElementById('messageSub').textContent = sub;
                 document.getElementById('messageBox').classList.add('show');
+                messageActive = true;
+                messageTimer = duration;
             }
 
             function hideMessage() {
@@ -557,304 +508,278 @@
                 document.getElementById('scoreEnemy').textContent = scoreEnemy;
             }
 
-            // ──────────────────────────────────────
-            // TOR-ERKENNUNG
-            // ──────────────────────────────────────
+            // ──────────── TOR & PAUSE ────────────
+            function triggerGoal(scorer) {
+                if (gamePaused) return;
+                gamePaused = true;
+                pauseTimer = 2.0; // 2 Sekunden Pause nach Tor
+
+                if (scorer === 'player') {
+                    scorePlayer++;
+                    spawnParticles(ball.x, ball.y, 35, '#4fc3f7', 220);
+                    spawnParticles(ball.x, ball.y, 20, '#ffffff', 150);
+                    showMessage('TOOOOR! 🎉', 'Du triffst!', 2.0);
+                } else {
+                    scoreEnemy++;
+                    spawnParticles(ball.x, ball.y, 35, '#ef5350', 220);
+                    spawnParticles(ball.x, ball.y, 20, '#ffffff', 150);
+                    showMessage('Gegentor... 😞', 'Der Gegner trifft', 2.0);
+                }
+                updateScoreDisplay();
+                resetPositions();
+            }
+
             function checkGoal() {
-                // Ball im gegnerischen Tor (oben) -> Spieler punktet
+                if (gamePaused) return;
+                // Gegner-Tor (oben) – Spieler punktet
                 if (ball.y - ball.radius < goalEnemy.y + goalEnemy.h &&
                     ball.y + ball.radius > goalEnemy.y &&
                     ball.x > goalEnemy.x - ball.radius &&
                     ball.x < goalEnemy.x + goalEnemy.w + ball.radius &&
                     ball.y < fieldY + fieldH * 0.1) {
-                    // Tor für Spieler!
-                    scorePlayer++;
-                    updateScoreDisplay();
-                    spawnParticles(ball.x, ball.y, 35, '#4fc3f7', 250);
-                    spawnParticles(ball.x, ball.y, 20, '#ffffff', 180);
-                    showMessage('TOOOOR! 🎉', 'Du triffst!', 2.2);
-                    resetPositions();
-                    ball.y = fieldY + fieldH / 2;
-                    ball.vy = -200;
-                    return true;
+                    triggerGoal('player');
+                    return;
                 }
-
-                // Ball im Spieler-Tor (unten) -> Gegner punktet
+                // Spieler-Tor (unten) – Gegner punktet
                 if (ball.y + ball.radius > goalPlayer.y &&
                     ball.y - ball.radius < goalPlayer.y + goalPlayer.h &&
                     ball.x > goalPlayer.x - ball.radius &&
                     ball.x < goalPlayer.x + goalPlayer.w + ball.radius &&
                     ball.y > fieldY + fieldH * 0.9) {
-                    // Tor für Gegner!
-                    scoreEnemy++;
-                    updateScoreDisplay();
-                    spawnParticles(ball.x, ball.y, 35, '#ef5350', 250);
-                    spawnParticles(ball.x, ball.y, 20, '#ffffff', 180);
-                    showMessage('Gegentor... 😞', 'Der Gegner trifft', 2.2);
-                    resetPositions();
-                    ball.y = fieldY + fieldH / 2;
-                    ball.vy = 200;
-                    return true;
+                    triggerGoal('enemy');
+                    return;
                 }
-                return false;
             }
 
-            // ──────────────────────────────────────
-            // KOLLISIONEN
-            // ──────────────────────────────────────
+            // ──────────── KOLLISIONEN (DRIBBLING-FREUNDLICH) ────────────
             function handleBallWallCollision() {
                 const leftWall = fieldX;
                 const rightWall = fieldX + fieldW;
                 const topWall = fieldY;
                 const bottomWall = fieldY + fieldH;
 
-                // Linke und rechte Wand
                 if (ball.x - ball.radius < leftWall) {
                     ball.x = leftWall + ball.radius;
                     ball.vx = Math.abs(ball.vx) * ball.bounceDamping;
-                    spawnParticles(ball.x, ball.y, 8, '#cccccc', 80);
+                    spawnParticles(ball.x, ball.y, 5, '#cccccc', 60);
                 }
                 if (ball.x + ball.radius > rightWall) {
                     ball.x = rightWall - ball.radius;
                     ball.vx = -Math.abs(ball.vx) * ball.bounceDamping;
-                    spawnParticles(ball.x, ball.y, 8, '#cccccc', 80);
+                    spawnParticles(ball.x, ball.y, 5, '#cccccc', 60);
                 }
 
-                // Obere Wand (außer Torbereich)
-                const inGoalEnemyX = ball.x > goalEnemy.x - ball.radius && ball.x < goalEnemy.x + goalEnemy.w +
-                    ball.radius;
+                const inGoalEnemyX = ball.x > goalEnemy.x - ball.radius && ball.x < goalEnemy.x + goalEnemy.w + ball.radius;
                 if (ball.y - ball.radius < topWall && !inGoalEnemyX) {
                     ball.y = topWall + ball.radius;
                     ball.vy = Math.abs(ball.vy) * ball.bounceDamping;
-                    spawnParticles(ball.x, ball.y, 8, '#cccccc', 80);
                 }
-
-                // Untere Wand (außer Torbereich)
-                const inGoalPlayerX = ball.x > goalPlayer.x - ball.radius && ball.x < goalPlayer.x + goalPlayer.w +
-                    ball.radius;
+                const inGoalPlayerX = ball.x > goalPlayer.x - ball.radius && ball.x < goalPlayer.x + goalPlayer.w + ball.radius;
                 if (ball.y + ball.radius > bottomWall && !inGoalPlayerX) {
                     ball.y = bottomWall - ball.radius;
                     ball.vy = -Math.abs(ball.vy) * ball.bounceDamping;
-                    spawnParticles(ball.x, ball.y, 8, '#cccccc', 80);
                 }
-
-                // Tor-Rückwände
                 if (inGoalEnemyX && ball.y - ball.radius < goalEnemy.y) {
                     ball.y = goalEnemy.y + ball.radius;
-                    ball.vy = Math.abs(ball.vy) * ball.bounceDamping * 0.5;
+                    ball.vy = Math.abs(ball.vy) * 0.5;
                 }
                 if (inGoalPlayerX && ball.y + ball.radius > goalPlayer.y + goalPlayer.h) {
                     ball.y = goalPlayer.y + goalPlayer.h - ball.radius;
-                    ball.vy = -Math.abs(ball.vy) * ball.bounceDamping * 0.5;
+                    ball.vy = -Math.abs(ball.vy) * 0.5;
                 }
             }
 
             function handleBallPlayerCollision(p) {
                 const d = dist(ball, p);
                 const minDist = ball.radius + p.radius;
+                if (d >= minDist) return;
 
-                if (d < minDist && d > 0.001) {
-                    // Trennen
-                    const overlap = minDist - d;
-                    const nx = (ball.x - p.x) / d;
-                    const ny = (ball.y - p.y) / d;
-                    ball.x += nx * overlap;
-                    ball.y += ny * overlap;
+                // Trennen
+                const overlap = minDist - d;
+                const nx = (ball.x - p.x) / (d || 1);
+                const ny = (ball.y - p.y) / (d || 1);
+                ball.x += nx * overlap;
+                ball.y += ny * overlap;
 
-                    // Geschwindigkeit übertragen
+                // Sanfte Dribbling-Physik: Wenn Spieler nicht sprintet, bleibt der Ball nah
+                if (!p.sprinting) {
+                    // Mische Ballgeschwindigkeit mit der des Spielers (Kontrolle)
+                    const blend = 0.15;
+                    ball.vx = ball.vx * (1 - blend) + p.vx * blend;
+                    ball.vy = ball.vy * (1 - blend) + p.vy * blend;
+                    // Leichte Rückpralldämpfung
+                    ball.vx *= 0.92;
+                    ball.vy *= 0.92;
+                } else {
+                    // Sprint: stärkerer Impuls, aber nicht zu extrem
                     const relVx = ball.vx - p.vx;
                     const relVy = ball.vy - p.vy;
                     const relVelAlongNormal = relVx * nx + relVy * ny;
-
                     if (relVelAlongNormal < 0) {
-                        const impulse = relVelAlongNormal * 1.5;
+                        const impulse = relVelAlongNormal * 1.1;
                         ball.vx -= impulse * nx;
                         ball.vy -= impulse * ny;
-
-                        // Extra Kraft wenn Spieler sprintet
-                        if (p.sprinting) {
-                            const extraPower = p === player ? player.kickPower * 1.3 : enemy.kickPower * 1.3;
-                            ball.vx += nx * extraPower * 0.3;
-                            ball.vy += ny * extraPower * 0.3;
-                        }
-
-                        // Begrenze Ballgeschwindigkeit
-                        const ballSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                        const maxBallSpeed = 800;
-                        if (ballSpeed > maxBallSpeed) {
-                            const scale = maxBallSpeed / ballSpeed;
-                            ball.vx *= scale;
-                            ball.vy *= scale;
-                        }
-
-                        spawnParticles(ball.x, ball.y, 5, '#ffffff', 60);
                     }
+                }
+
+                const ballSpeed = Math.hypot(ball.vx, ball.vy);
+                const maxBallSpeed = 750;
+                if (ballSpeed > maxBallSpeed) {
+                    const s = maxBallSpeed / ballSpeed;
+                    ball.vx *= s;
+                    ball.vy *= s;
                 }
             }
 
             function handlePlayerWallCollision(p) {
-                const leftWall = fieldX + p.radius;
-                const rightWall = fieldX + fieldW - p.radius;
-                const topWall = fieldY + p.radius;
-                const bottomWall = fieldY + fieldH - p.radius;
+                const margin = p.radius;
+                p.x = clamp(p.x, fieldX + margin, fieldX + fieldW - margin);
+                p.y = clamp(p.y, fieldY + margin, fieldY + fieldH - margin);
 
-                // Torbereiche erlauben Durchgang nur teilweise
-                if (p.x < leftWall) p.x = leftWall;
-                if (p.x > rightWall) p.x = rightWall;
-                if (p.y < topWall) p.y = topWall;
-                if (p.y > bottomWall) p.y = bottomWall;
-
-                // Verhindere dass Spieler komplett ins Tor läuft
                 const inGoalEnemyX = p.x > goalEnemy.x && p.x < goalEnemy.x + goalEnemy.w;
                 const inGoalPlayerX = p.x > goalPlayer.x && p.x < goalPlayer.x + goalPlayer.w;
-
-                if (inGoalEnemyX && p.y < topWall + p.radius) p.y = topWall + p.radius;
-                if (inGoalPlayerX && p.y > bottomWall - p.radius) p.y = bottomWall - p.radius;
+                if (inGoalEnemyX && p.y < fieldY + margin) p.y = fieldY + margin;
+                if (inGoalPlayerX && p.y > fieldY + fieldH - margin) p.y = fieldY + fieldH - margin;
             }
 
-            // ──────────────────────────────────────
-            // KI-STEUERUNG
-            // ──────────────────────────────────────
+            // ──────────── KI (VERBESSERT) ────────────
             function updateAI(dt) {
+                if (gamePaused) return;
+
                 enemy.aiTimer -= dt;
+                enemy.aiStuckTimer += dt;
+
+                // Anti-Stuck: Wenn Gegner zu lange in der Nähe einer Ecke festhängt, zurück zur Mitte
+                const distToCenter = Math.hypot(enemy.x - (fieldX + fieldW/2), enemy.y - (fieldY + fieldH/2));
+                const nearCorner = (enemy.x < fieldX + 40 || enemy.x > fieldX + fieldW - 40) &&
+                                   (enemy.y < fieldY + 40 || enemy.y > fieldY + fieldH - 40);
+                if (nearCorner && enemy.aiStuckTimer > 2.5) {
+                    enemy.aiState = 'retreat';
+                    enemy.aiTimer = 1.2;
+                    enemy.aiStuckTimer = 0;
+                }
 
                 if (enemy.aiTimer <= 0) {
-                    // Zustandswechsel
-                    const rand = Math.random();
                     const distToBall = dist(enemy, ball);
-                    const ballInEnemyHalf = ball.y < fieldY + fieldH / 2;
-                    const ballNearEnemyGoal = ball.y < fieldY + fieldH * 0.35;
+                    const ballInEnemyHalf = ball.y < fieldY + fieldH/2;
 
-                    if (ballNearEnemyGoal && distToBall < 150) {
-                        enemy.aiState = 'defend';
-                    } else if (ballInEnemyHalf && distToBall < 200) {
+                    if (distToBall < 130 && ballInEnemyHalf) {
                         enemy.aiState = Math.random() < 0.7 ? 'chase' : 'attack';
-                    } else if (!ballInEnemyHalf && distToBall < 120) {
-                        enemy.aiState = 'chase';
+                    } else if (ballInEnemyHalf && distToBall < 220) {
+                        enemy.aiState = 'defend';
                     } else {
-                        enemy.aiState = Math.random() < 0.5 ? 'chase' : 'defend';
+                        enemy.aiState = Math.random() < 0.6 ? 'chase' : 'defend';
                     }
-                    enemy.aiTimer = 0.5 + Math.random() * 1.5;
+                    enemy.aiTimer = 0.8 + Math.random() * 1.2;
                 }
 
                 let targetX, targetY;
+                const safeMinX = fieldX + 35;
+                const safeMaxX = fieldX + fieldW - 35;
+                const safeMinY = fieldY + 35;
+                const safeMaxY = fieldY + fieldH - 35;
 
                 switch (enemy.aiState) {
                     case 'chase':
-                        // Zum Ball bewegen, etwas hinter den Ball
-                        const approachAngle = Math.atan2(ball.y - enemy.y, ball.x - enemy.x);
-                        targetX = ball.x - Math.cos(approachAngle) * 25;
-                        targetY = ball.y - Math.sin(approachAngle) * 25;
+                        targetX = ball.x;
+                        targetY = ball.y;
                         enemy.sprinting = dist(enemy, ball) > 100;
                         break;
-
                     case 'defend':
-                        // Zwischen Ball und eigenem Tor positionieren
-                        const defX = clamp(ball.x, goalEnemy.x + 30, goalEnemy.x + goalEnemy.w - 30);
-                        const defY = goalEnemy.y + goalEnemy.h + 50;
-                        targetX = defX;
-                        targetY = defY;
-                        enemy.sprinting = dist(enemy, ball) < 80;
+                        targetX = clamp(ball.x, goalEnemy.x + 30, goalEnemy.x + goalEnemy.w - 30);
+                        targetY = goalEnemy.y + goalEnemy.h + 45;
+                        enemy.sprinting = dist(enemy, ball) < 70;
                         break;
-
                     case 'attack':
-                        // Aggressiv zum Ball und Richtung Spieler-Tor
                         targetX = ball.x;
                         targetY = ball.y;
                         enemy.sprinting = true;
                         break;
-
+                    case 'retreat':
+                        targetX = fieldX + fieldW/2;
+                        targetY = fieldY + fieldH/2;
+                        enemy.sprinting = false;
+                        break;
                     default:
                         targetX = ball.x;
                         targetY = ball.y;
-                        enemy.sprinting = false;
                 }
 
-                // Bewegung zum Ziel
+                targetX = clamp(targetX, safeMinX, safeMaxX);
+                targetY = clamp(targetY, safeMinY, safeMaxY);
+
                 const dx = targetX - enemy.x;
                 const dy = targetY - enemy.y;
-                const d = Math.sqrt(dx * dx + dy * dy);
-
-                if (d > 5) {
+                const d = Math.hypot(dx, dy);
+                if (d > 4) {
                     const speed = enemy.maxSpeed * (enemy.sprinting ? enemy.sprintMultiplier : 1);
-                    const nx = dx / d;
-                    const ny = dy / d;
-                    enemy.vx = nx * speed;
-                    enemy.vy = ny * speed;
+                    enemy.vx = (dx / d) * speed;
+                    enemy.vy = (dy / d) * speed;
                 } else {
-                    enemy.vx *= 0.8;
-                    enemy.vy *= 0.8;
+                    enemy.vx *= 0.85;
+                    enemy.vy *= 0.85;
                 }
 
-                // KI schießt wenn nah am Ball und Richtung Spieler-Tor
-                if (dist(enemy, ball) < enemy.radius + ball.radius + 15 && enemy.shootCooldown <= 0) {
-                    const toGoalX = goalPlayer.x + goalPlayer.w / 2 - ball.x;
+                // Schießen mit Zufallsfehler und längerer Cooldown
+                const canShoot = dist(enemy, ball) < enemy.radius + ball.radius + 18 && enemy.shootCooldown <= 0;
+                if (canShoot && !gamePaused) {
+                    const toGoalX = goalPlayer.x + goalPlayer.w/2 - ball.x;
                     const toGoalY = goalPlayer.y - ball.y;
-                    const goalDist = Math.sqrt(toGoalX * toGoalX + toGoalY * toGoalY);
+                    const goalDist = Math.hypot(toGoalX, toGoalY);
                     if (goalDist > 0) {
-                        const power = enemy.kickPower * (enemy.sprinting ? 1.4 : 1);
-                        ball.vx += (toGoalX / goalDist) * power;
-                        ball.vy += (toGoalY / goalDist) * power;
-                        enemy.shootCooldown = 0.6 + Math.random() * 0.8;
+                        // Streuung einbauen
+                        const inaccuracy = (Math.random() - 0.5) * 0.35;
+                        const angle = Math.atan2(toGoalY, toGoalX) + inaccuracy;
+                        const power = enemy.kickPower * (enemy.sprinting ? 1.3 : 1);
+                        ball.vx += Math.cos(angle) * power;
+                        ball.vy += Math.sin(angle) * power;
+                        enemy.shootCooldown = 1.8 + Math.random() * 1.2; // längere Pause
                         spawnParticles(ball.x, ball.y, 12, '#ff8a80', 150);
                     }
                 }
-
                 if (enemy.shootCooldown > 0) enemy.shootCooldown -= dt;
             }
 
-            // ──────────────────────────────────────
-            // TOUCH-STEUERUNG
-            // ──────────────────────────────────────
+            // ──────────── STEUERUNG (wie zuvor) ────────────
             const joystickZone = document.getElementById('joystickZone');
             const joystickThumb = document.getElementById('joystickThumb');
             const joystickBase = document.getElementById('joystickBase');
             const btnShoot = document.getElementById('btnShoot');
             const btnSprint = document.getElementById('btnSprint');
 
-            let joystickActive = false;
-            let joystickId = null;
-            let joystickDX = 0;
-            let joystickDY = 0;
-            let shootPressed = false;
-            let sprintPressed = false;
+            let joystickActive = false, joystickId = null, joystickDX = 0, joystickDY = 0;
+            let shootPressed = false, sprintPressed = false;
 
             function getJoystickCenter() {
                 const rect = joystickBase.getBoundingClientRect();
                 return {
-                    x: rect.left + rect.width / 2,
-                    y: rect.top + rect.height / 2,
-                    maxR: rect.width / 2 - 25,
+                    x: rect.left + rect.width/2,
+                    y: rect.top + rect.height/2,
+                    maxR: rect.width/2 - 25,
                 };
             }
 
             function updateJoystickThumb(clientX, clientY) {
                 const center = getJoystickCenter();
-                let dx = clientX - center.x;
-                let dy = clientY - center.y;
-                const distFromCenter = Math.sqrt(dx * dx + dy * dy);
-
+                let dx = clientX - center.x, dy = clientY - center.y;
+                const distFromCenter = Math.hypot(dx, dy);
                 if (distFromCenter > center.maxR) {
                     dx = (dx / distFromCenter) * center.maxR;
                     dy = (dy / distFromCenter) * center.maxR;
                 }
-
                 joystickDX = dx / center.maxR;
                 joystickDY = dy / center.maxR;
-
                 joystickThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
             }
 
             function resetJoystick() {
                 joystickActive = false;
                 joystickId = null;
-                joystickDX = 0;
-                joystickDY = 0;
+                joystickDX = joystickDY = 0;
                 joystickThumb.style.transform = 'translate(-50%, -50%)';
                 joystickThumb.classList.remove('active');
             }
 
-            // Touch-Events für Joystick
             joystickZone.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if (!joystickActive) {
@@ -864,7 +789,6 @@
                     updateJoystickThumb(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
                 }
             }, { passive: false });
-
             joystickZone.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 for (let i = 0; i < e.changedTouches.length; i++) {
@@ -873,18 +797,13 @@
                     }
                 }
             }, { passive: false });
-
             joystickZone.addEventListener('touchend', (e) => {
                 for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === joystickId) {
-                        resetJoystick();
-                    }
+                    if (e.changedTouches[i].identifier === joystickId) resetJoystick();
                 }
             });
-
             joystickZone.addEventListener('touchcancel', resetJoystick);
 
-            // Maus-Support für Desktop
             joystickZone.addEventListener('mousedown', (e) => {
                 if (!joystickActive) {
                     joystickActive = true;
@@ -893,39 +812,25 @@
                     updateJoystickThumb(e.clientX, e.clientY);
                 }
             });
-
             window.addEventListener('mousemove', (e) => {
-                if (joystickActive && joystickId === 'mouse') {
-                    updateJoystickThumb(e.clientX, e.clientY);
-                }
+                if (joystickActive && joystickId === 'mouse') updateJoystickThumb(e.clientX, e.clientY);
             });
+            window.addEventListener('mouseup', () => { if (joystickId === 'mouse') resetJoystick(); });
 
-            window.addEventListener('mouseup', () => {
-                if (joystickId === 'mouse') resetJoystick();
-            });
-
-            // Action Buttons
-            btnShoot.addEventListener('touchstart', (e) => { e.preventDefault();
-                shootPressed = true; }, { passive: false });
-            btnShoot.addEventListener('touchend', (e) => { e.preventDefault();
-                shootPressed = false; }, { passive: false });
+            btnShoot.addEventListener('touchstart', (e) => { e.preventDefault(); shootPressed = true; }, { passive: false });
+            btnShoot.addEventListener('touchend', (e) => { e.preventDefault(); shootPressed = false; }, { passive: false });
             btnShoot.addEventListener('touchcancel', () => { shootPressed = false; });
             btnShoot.addEventListener('mousedown', () => { shootPressed = true; });
             btnShoot.addEventListener('mouseup', () => { shootPressed = false; });
             btnShoot.addEventListener('mouseleave', () => { shootPressed = false; });
 
-            btnSprint.addEventListener('touchstart', (e) => { e.preventDefault();
-                sprintPressed = true; }, { passive: false });
-            btnSprint.addEventListener('touchend', (e) => { e.preventDefault();
-                sprintPressed = false; }, { passive: false });
+            btnSprint.addEventListener('touchstart', (e) => { e.preventDefault(); sprintPressed = true; }, { passive: false });
+            btnSprint.addEventListener('touchend', (e) => { e.preventDefault(); sprintPressed = false; }, { passive: false });
             btnSprint.addEventListener('touchcancel', () => { sprintPressed = false; });
             btnSprint.addEventListener('mousedown', () => { sprintPressed = true; });
             btnSprint.addEventListener('mouseup', () => { sprintPressed = false; });
             btnSprint.addEventListener('mouseleave', () => { sprintPressed = false; });
 
-            // ──────────────────────────────────────
-            // TASTATUR-STEUERUNG (Desktop Fallback)
-            // ──────────────────────────────────────
             const keys = {};
             window.addEventListener('keydown', (e) => {
                 keys[e.key.toLowerCase()] = true;
@@ -939,8 +844,7 @@
             });
 
             function getKeyboardInput() {
-                let dx = 0,
-                    dy = 0;
+                let dx = 0, dy = 0;
                 if (keys['w'] || keys['arrowup']) dy = -1;
                 if (keys['s'] || keys['arrowdown']) dy = 1;
                 if (keys['a'] || keys['arrowleft']) dx = -1;
@@ -948,51 +852,50 @@
                 return { dx, dy };
             }
 
-            // ──────────────────────────────────────
-            // SPIEL-UPDATE
-            // ──────────────────────────────────────
+            // ──────────── UPDATE LOOP ────────────
             let lastTime = performance.now();
 
             function update(dt) {
-                // Clamp dt
                 if (dt > 0.1) dt = 0.1;
 
-                // Nachrichten-Timer
+                // Nachrichten
                 if (messageActive) {
                     messageTimer -= dt;
                     if (messageTimer <= 0) hideMessage();
                 }
 
-                // ── SPIELER BEWEGUNG ─────────────────
-                let inputDX = joystickDX;
-                let inputDY = joystickDY;
+                // Tor-Pause
+                if (gamePaused) {
+                    pauseTimer -= dt;
+                    if (pauseTimer <= 0) gamePaused = false;
+                    // In der Pause nur Partikel updaten, sonst nichts
+                    updateParticles(dt);
+                    return;
+                }
 
-                // Keyboard-Input als Fallback
+                // ── SPIELER ──
+                let inputDX = joystickDX, inputDY = joystickDY;
                 const kb = getKeyboardInput();
                 if (kb.dx !== 0 || kb.dy !== 0) {
-                    inputDX = kb.dx;
-                    inputDY = kb.dy;
-                    const mag = Math.sqrt(inputDX * inputDX + inputDY * inputDY);
-                    if (mag > 1) { inputDX /= mag;
-                        inputDY /= mag; }
+                    inputDX = kb.dx; inputDY = kb.dy;
+                    const mag = Math.hypot(inputDX, inputDY);
+                    if (mag > 1) { inputDX /= mag; inputDY /= mag; }
                 }
 
                 player.sprinting = sprintPressed;
                 const pSpeed = player.maxSpeed * (player.sprinting ? player.sprintMultiplier : 1);
                 player.vx = inputDX * pSpeed;
                 player.vy = inputDY * pSpeed;
-
                 player.x += player.vx * dt;
                 player.y += player.vy * dt;
                 handlePlayerWallCollision(player);
 
-                // Spieler Schuss
                 if (shootPressed && player.shootCooldown <= 0 && dist(player, ball) < player.radius + ball.radius + 20) {
-                    const toGoalX = goalEnemy.x + goalEnemy.w / 2 - ball.x;
-                    const toGoalY = goalEnemy.y + goalEnemy.h / 2 - ball.y;
-                    const goalDist = Math.sqrt(toGoalX * toGoalX + toGoalY * toGoalY);
+                    const toGoalX = goalEnemy.x + goalEnemy.w/2 - ball.x;
+                    const toGoalY = goalEnemy.y + goalEnemy.h/2 - ball.y;
+                    const goalDist = Math.hypot(toGoalX, toGoalY);
                     if (goalDist > 0) {
-                        const power = player.kickPower * (player.sprinting ? 1.5 : 1);
+                        const power = player.kickPower * (player.sprinting ? 1.4 : 1);
                         ball.vx += (toGoalX / goalDist) * power;
                         ball.vy += (toGoalY / goalDist) * power;
                         player.shootCooldown = 0.5;
@@ -1001,55 +904,40 @@
                 }
                 if (player.shootCooldown > 0) player.shootCooldown -= dt;
 
-                // ── GEGNER UPDATE ─────────────────
+                // ── GEGNER ──
                 updateAI(dt);
                 enemy.x += enemy.vx * dt;
                 enemy.y += enemy.vy * dt;
                 handlePlayerWallCollision(enemy);
 
-                // ── BALL UPDATE ─────────────────
+                // ── BALL ──
                 ball.vx *= ball.friction;
                 ball.vy *= ball.friction;
-
-                // Geschwindigkeits-Limit
-                const ballSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                const ballSpeed = Math.hypot(ball.vx, ball.vy);
                 if (ballSpeed > 750) {
                     const s = 750 / ballSpeed;
-                    ball.vx *= s;
-                    ball.vy *= s;
+                    ball.vx *= s; ball.vy *= s;
                 }
-                if (ballSpeed < 5 && ballSpeed > 0) {
-                    ball.vx *= 0.9;
-                    ball.vy *= 0.9;
-                }
+                if (ballSpeed < 3) { ball.vx *= 0.9; ball.vy *= 0.9; }
 
                 ball.x += ball.vx * dt;
                 ball.y += ball.vy * dt;
 
-                // Trail
-                if (ballSpeed > 30) {
+                if (ballSpeed > 25) {
                     ball.trail.push({ x: ball.x, y: ball.y, life: 1 });
                     if (ball.trail.length > ball.maxTrail) ball.trail.shift();
                 }
-                for (let t of ball.trail) t.life -= dt * 3;
+                for (let t of ball.trail) t.life -= dt * 2.8;
 
-                // Kollisionen
                 handleBallWallCollision();
                 handleBallPlayerCollision(player);
                 handleBallPlayerCollision(enemy);
-
-                // Tor-Check
                 checkGoal();
-
-                // Partikel
                 updateParticles(dt);
             }
 
-            // ──────────────────────────────────────
-            // RENDERING
-            // ──────────────────────────────────────
+            // ──────────── RENDERING ────────────
             function drawField() {
-                // Hintergrund (Asphalt)
                 const asphaltGrad = ctx.createLinearGradient(fieldX, fieldY, fieldX, fieldY + fieldH);
                 asphaltGrad.addColorStop(0, '#4a4a4a');
                 asphaltGrad.addColorStop(0.5, '#555555');
@@ -1057,352 +945,176 @@
                 ctx.fillStyle = asphaltGrad;
                 ctx.fillRect(fieldX, fieldY, fieldW, fieldH);
 
-                // Asphalt-Textur (kleine Punkte)
                 ctx.fillStyle = 'rgba(255,255,255,0.03)';
-                const dotSpacing = 15;
-                for (let x = fieldX; x < fieldX + fieldW; x += dotSpacing) {
-                    for (let y = fieldY; y < fieldY + fieldH; y += dotSpacing) {
-                        if (Math.random() < 0.3) {
+                for (let x = fieldX; x < fieldX + fieldW; x += 18) {
+                    for (let y = fieldY; y < fieldY + fieldH; y += 18) {
+                        if (Math.random() < 0.25) {
                             ctx.beginPath();
-                            ctx.arc(x + Math.random() * 8, y + Math.random() * 8, 0.8, 0, Math.PI * 2);
+                            ctx.arc(x + Math.random()*6, y + Math.random()*6, 0.7, 0, Math.PI*2);
                             ctx.fill();
                         }
                     }
                 }
 
-                // Mittellinie
                 ctx.strokeStyle = 'rgba(255,255,255,0.25)';
                 ctx.lineWidth = 2.5;
                 ctx.setLineDash([12, 18]);
                 ctx.beginPath();
-                ctx.moveTo(fieldX + 10, fieldY + fieldH / 2);
-                ctx.lineTo(fieldX + fieldW - 10, fieldY + fieldH / 2);
+                ctx.moveTo(fieldX + 10, fieldY + fieldH/2);
+                ctx.lineTo(fieldX + fieldW - 10, fieldY + fieldH/2);
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                // Mittelkreis
                 ctx.strokeStyle = 'rgba(255,255,255,0.2)';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.arc(fieldX + fieldW / 2, fieldY + fieldH / 2, fieldW * 0.18, 0, Math.PI * 2);
+                ctx.arc(fieldX + fieldW/2, fieldY + fieldH/2, fieldW * 0.17, 0, Math.PI*2);
                 ctx.stroke();
-
-                // Anstoßpunkt
                 ctx.fillStyle = 'rgba(255,255,255,0.4)';
                 ctx.beginPath();
-                ctx.arc(fieldX + fieldW / 2, fieldY + fieldH / 2, 5, 0, Math.PI * 2);
+                ctx.arc(fieldX + fieldW/2, fieldY + fieldH/2, 4.5, 0, Math.PI*2);
                 ctx.fill();
             }
 
             function drawWalls() {
-                // Außenwände (Zäune/Mauern mit Graffiti-Look)
-                const wallColor = '#6d6d6d';
-                const wallTop = '#888888';
-
-                // Oben
-                const topGrad = ctx.createLinearGradient(0, fieldY - wallThickness, 0, fieldY);
-                topGrad.addColorStop(0, '#5c5c5c');
-                topGrad.addColorStop(1, '#787878');
-                ctx.fillStyle = topGrad;
+                const wallGradTop = ctx.createLinearGradient(0, fieldY - wallThickness, 0, fieldY);
+                wallGradTop.addColorStop(0, '#5c5c5c'); wallGradTop.addColorStop(1, '#787878');
+                ctx.fillStyle = wallGradTop;
                 ctx.fillRect(fieldX - 5, fieldY - wallThickness, fieldW + 10, wallThickness);
 
-                // Unten
-                const botGrad = ctx.createLinearGradient(0, fieldY + fieldH, 0, fieldY + fieldH + wallThickness);
-                botGrad.addColorStop(0, '#787878');
-                botGrad.addColorStop(1, '#5c5c5c');
-                ctx.fillStyle = botGrad;
+                const wallGradBot = ctx.createLinearGradient(0, fieldY + fieldH, 0, fieldY + fieldH + wallThickness);
+                wallGradBot.addColorStop(0, '#787878'); wallGradBot.addColorStop(1, '#5c5c5c');
+                ctx.fillStyle = wallGradBot;
                 ctx.fillRect(fieldX - 5, fieldY + fieldH, fieldW + 10, wallThickness);
 
-                // Links
-                const leftGrad = ctx.createLinearGradient(fieldX - wallThickness, 0, fieldX, 0);
-                leftGrad.addColorStop(0, '#5c5c5c');
-                leftGrad.addColorStop(1, '#787878');
-                ctx.fillStyle = leftGrad;
+                ctx.fillStyle = '#5c5c5c';
                 ctx.fillRect(fieldX - wallThickness, fieldY - 5, wallThickness, fieldH + 10);
-
-                // Rechts
-                const rightGrad = ctx.createLinearGradient(fieldX + fieldW, 0, fieldX + fieldW + wallThickness, 0);
-                rightGrad.addColorStop(0, '#787878');
-                rightGrad.addColorStop(1, '#5c5c5c');
-                ctx.fillStyle = rightGrad;
+                ctx.fillStyle = '#787878';
                 ctx.fillRect(fieldX + fieldW, fieldY - 5, wallThickness, fieldH + 10);
 
-                // Ecken abrunden (kleine Quadrate)
-                const corners = [
-                    { x: fieldX - wallThickness, y: fieldY - wallThickness },
-                    { x: fieldX + fieldW, y: fieldY - wallThickness },
-                    { x: fieldX - wallThickness, y: fieldY + fieldH },
-                    { x: fieldX + fieldW, y: fieldY + fieldH },
-                ];
-                ctx.fillStyle = '#4a4a4a';
-                for (const c of corners) {
-                    ctx.fillRect(c.x, c.y, wallThickness, wallThickness);
-                }
-
-                // Graffiti-Effekte an den Wänden
-                const graffitiColors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff922b', '#cc5de8'];
-                ctx.save();
-                for (let i = 0; i < 8; i++) {
-                    const gx = fieldX + Math.random() * fieldW;
-                    const gy = fieldY - wallThickness + Math.random() * wallThickness * 0.8;
-                    ctx.fillStyle = graffitiColors[Math.floor(Math.random() * graffitiColors.length)];
-                    ctx.globalAlpha = 0.4 + Math.random() * 0.3;
-                    ctx.beginPath();
-                    ctx.arc(gx, gy, 6 + Math.random() * 10, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.restore();
-
-                // Zaun-Pfosten oben und unten
+                // Ecken & Pfosten
                 ctx.fillStyle = '#3a3a3a';
-                const postSpacing = 35;
-                for (let x = fieldX; x <= fieldX + fieldW; x += postSpacing) {
+                const spacing = 40;
+                for (let x = fieldX; x <= fieldX + fieldW; x += spacing) {
                     ctx.fillRect(x - 2, fieldY - wallThickness, 4, wallThickness);
                     ctx.fillRect(x - 2, fieldY + fieldH, 4, wallThickness);
                 }
             }
 
             function drawGoals() {
-                // Gegner-Tor (oben)
-                const gex = goalEnemy.x;
-                const gey = goalEnemy.y;
-                const gew = goalEnemy.w;
-                const geh = goalEnemy.h;
-
-                // Tornetz
-                ctx.fillStyle = 'rgba(255,255,255,0.08)';
-                ctx.fillRect(gex, gey, gew, geh);
-
-                // Netz-Linien
-                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                ctx.lineWidth = 0.8;
-                const netSpacing = 10;
-                for (let nx = gex; nx <= gex + gew; nx += netSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(nx, gey);
-                    ctx.lineTo(nx, gey + geh);
-                    ctx.stroke();
-                }
-                for (let ny = gey; ny <= gey + geh; ny += netSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(gex, ny);
-                    ctx.lineTo(gex + gew, ny);
-                    ctx.stroke();
-                }
-
-                // Torrahmen
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 3.5;
-                ctx.shadowColor = 'rgba(255,255,255,0.6)';
-                ctx.shadowBlur = 10;
-                ctx.strokeRect(gex, gey, gew, geh);
-                ctx.shadowBlur = 0;
-
-                // Pfosten
-                ctx.fillStyle = '#e0e0e0';
-                ctx.fillRect(gex - 4, gey - 2, 8, geh + 4);
-                ctx.fillRect(gex + gew - 4, gey - 2, 8, geh + 4);
-                ctx.fillRect(gex - 2, gey - 4, gew + 4, 8);
-
-                // Spieler-Tor (unten)
-                const gpx = goalPlayer.x;
-                const gpy = goalPlayer.y;
-                const gpw = goalPlayer.w;
-                const gph = goalPlayer.h;
-
-                ctx.fillStyle = 'rgba(255,255,255,0.08)';
-                ctx.fillRect(gpx, gpy, gpw, gph);
-
-                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                ctx.lineWidth = 0.8;
-                for (let nx = gpx; nx <= gpx + gpw; nx += netSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(nx, gpy);
-                    ctx.lineTo(nx, gpy + gph);
-                    ctx.stroke();
-                }
-                for (let ny = gpy; ny <= gpy + gph; ny += netSpacing) {
-                    ctx.beginPath();
-                    ctx.moveTo(gpx, ny);
-                    ctx.lineTo(gpx + gpw, ny);
-                    ctx.stroke();
-                }
-
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 3.5;
-                ctx.shadowColor = 'rgba(255,255,255,0.6)';
-                ctx.shadowBlur = 10;
-                ctx.strokeRect(gpx, gpy, gpw, gph);
-                ctx.shadowBlur = 0;
-
-                ctx.fillStyle = '#e0e0e0';
-                ctx.fillRect(gpx - 4, gpy - 2, 8, gph + 4);
-                ctx.fillRect(gpx + gpw - 4, gpy - 2, 8, gph + 4);
-                ctx.fillRect(gpx - 2, gpy + gph - 4, gpw + 4, 8);
+                const drawOneGoal = (gx, gy, gw, gh) => {
+                    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                    ctx.fillRect(gx, gy, gw, gh);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                    ctx.lineWidth = 0.7;
+                    for (let nx = gx; nx <= gx + gw; nx += 12) {
+                        ctx.beginPath(); ctx.moveTo(nx, gy); ctx.lineTo(nx, gy + gh); ctx.stroke();
+                    }
+                    for (let ny = gy; ny <= gy + gh; ny += 12) {
+                        ctx.beginPath(); ctx.moveTo(gx, ny); ctx.lineTo(gx + gw, ny); ctx.stroke();
+                    }
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = 'rgba(255,255,255,0.5)';
+                    ctx.shadowBlur = 8;
+                    ctx.strokeRect(gx, gy, gw, gh);
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#e0e0e0';
+                    ctx.fillRect(gx - 4, gy - 2, 8, gh + 4);
+                    ctx.fillRect(gx + gw - 4, gy - 2, 8, gh + 4);
+                    ctx.fillRect(gx - 2, gy - 4, gw + 4, 8);
+                };
+                drawOneGoal(goalEnemy.x, goalEnemy.y, goalEnemy.w, goalEnemy.h);
+                drawOneGoal(goalPlayer.x, goalPlayer.y, goalPlayer.w, goalPlayer.h);
             }
 
             function drawPlayer(p) {
                 ctx.save();
-
-                // Schatten
                 ctx.fillStyle = 'rgba(0,0,0,0.4)';
                 ctx.beginPath();
-                ctx.ellipse(p.x, p.y + p.radius * 0.7, p.radius * 0.9, p.radius * 0.3, 0, 0, Math.PI * 2);
+                ctx.ellipse(p.x, p.y + p.radius*0.7, p.radius*0.9, p.radius*0.3, 0, 0, Math.PI*2);
                 ctx.fill();
 
-                // Körper
-                const bodyGrad = ctx.createRadialGradient(p.x - 2, p.y - 3, p.radius * 0.1, p.x, p.y, p.radius);
-                bodyGrad.addColorStop(0, p.color);
-                bodyGrad.addColorStop(0.7, p.darkColor);
-                bodyGrad.addColorStop(1, '#1a1a1a');
-                ctx.fillStyle = bodyGrad;
+                const grad = ctx.createRadialGradient(p.x-2, p.y-2, p.radius*0.1, p.x, p.y, p.radius);
+                grad.addColorStop(0, p.color);
+                grad.addColorStop(0.7, p.darkColor);
+                grad.addColorStop(1, '#1a1a1a');
+                ctx.fillStyle = grad;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
                 ctx.fill();
-
-                // Outline
                 ctx.strokeStyle = 'rgba(255,255,255,0.5)';
                 ctx.lineWidth = 2;
                 ctx.stroke();
-
-                // Sprint-Effekt
                 if (p.sprinting) {
                     ctx.strokeStyle = 'rgba(255,200,50,0.8)';
                     ctx.lineWidth = 3;
                     ctx.shadowColor = 'rgba(255,200,50,0.7)';
-                    ctx.shadowBlur = 15;
+                    ctx.shadowBlur = 12;
                     ctx.stroke();
                     ctx.shadowBlur = 0;
                 }
-
-                // Trikotnummer
                 ctx.fillStyle = '#fff';
                 ctx.font = `bold ${p.radius*0.9}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(p.team === 'player' ? '10' : '9', p.x, p.y);
-
-                // Richtungspfeil (klein)
-                const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-                if (speed > 10) {
-                    const ax = p.vx / speed;
-                    const ay = p.vy / speed;
-                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-                    ctx.beginPath();
-                    ctx.moveTo(p.x + ax * p.radius, p.y + ay * p.radius);
-                    ctx.lineTo(p.x + ax * (p.radius + 8) - ay * 4, p.y + ay * (p.radius + 8) + ax * 4);
-                    ctx.lineTo(p.x + ax * (p.radius + 8) + ay * 4, p.y + ay * (p.radius + 8) - ax * 4);
-                    ctx.closePath();
-                    ctx.fill();
-                }
-
+                ctx.fillText(p === player ? '10' : '9', p.x, p.y);
                 ctx.restore();
             }
 
             function drawBall() {
                 ctx.save();
-
-                // Trail
-                for (let i = 0; i < ball.trail.length; i++) {
-                    const t = ball.trail[i];
+                for (const t of ball.trail) {
                     if (t.life > 0) {
-                        ctx.globalAlpha = t.life * 0.5;
+                        ctx.globalAlpha = t.life * 0.4;
                         ctx.fillStyle = '#ffffff';
                         ctx.beginPath();
-                        ctx.arc(t.x, t.y, ball.radius * (0.4 + t.life * 0.6), 0, Math.PI * 2);
+                        ctx.arc(t.x, t.y, ball.radius * (0.4 + t.life*0.6), 0, Math.PI*2);
                         ctx.fill();
                     }
                 }
                 ctx.globalAlpha = 1;
-
-                // Schatten
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
                 ctx.beginPath();
-                ctx.ellipse(ball.x + 2, ball.y + 2, ball.radius, ball.radius * 0.7, 0, 0, Math.PI * 2);
+                ctx.ellipse(ball.x+1, ball.y+1, ball.radius, ball.radius*0.7, 0, 0, Math.PI*2);
                 ctx.fill();
 
-                // Ball
-                const ballGrad = ctx.createRadialGradient(ball.x - 2, ball.y - 3, ball.radius * 0.15, ball.x, ball.y,
-                    ball.radius);
+                const ballGrad = ctx.createRadialGradient(ball.x-1, ball.y-2, ball.radius*0.1, ball.x, ball.y, ball.radius);
                 ballGrad.addColorStop(0, '#ffffff');
                 ballGrad.addColorStop(0.5, '#e8e8e8');
                 ballGrad.addColorStop(1, '#999999');
                 ctx.fillStyle = ballGrad;
                 ctx.beginPath();
-                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
                 ctx.fill();
 
-                // Fünfecksmuster
-                ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-                ctx.lineWidth = 0.7;
-                const pentR = ball.radius * 0.55;
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                ctx.lineWidth = 0.6;
                 for (let i = 0; i < 5; i++) {
-                    const angle = (i / 5) * Math.PI * 2 + ball.x * 0.1;
-                    const px = ball.x + Math.cos(angle) * pentR;
-                    const py = ball.y + Math.sin(angle) * pentR;
+                    const angle = (i/5)*Math.PI*2 + ball.x*0.1;
+                    const px = ball.x + Math.cos(angle)*ball.radius*0.55;
+                    const py = ball.y + Math.sin(angle)*ball.radius*0.55;
                     ctx.beginPath();
-                    ctx.arc(px, py, ball.radius * 0.2, 0, Math.PI * 2);
+                    ctx.arc(px, py, ball.radius*0.18, 0, Math.PI*2);
                     ctx.stroke();
                 }
-
-                // Glanzlicht
                 ctx.fillStyle = 'rgba(255,255,255,0.6)';
                 ctx.beginPath();
-                ctx.arc(ball.x - ball.radius * 0.3, ball.y - ball.radius * 0.35, ball.radius * 0.3, 0, Math.PI * 2);
+                ctx.arc(ball.x - ball.radius*0.3, ball.y - ball.radius*0.35, ball.radius*0.28, 0, Math.PI*2);
                 ctx.fill();
-
                 ctx.restore();
             }
 
             function drawBackground() {
-                // Straßenumgebung außerhalb des Feldes
                 const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
                 bgGrad.addColorStop(0, '#2c2c2c');
-                bgGrad.addColorStop(0.5, '#333333');
                 bgGrad.addColorStop(1, '#262626');
                 ctx.fillStyle = bgGrad;
                 ctx.fillRect(0, 0, W, H);
-
-                // Gebäude-Silhouetten im Hintergrund
-                ctx.fillStyle = '#1a1a1a';
-                const buildings = [
-                    { x: W * 0.05, w: W * 0.15, h: H * 0.2 },
-                    { x: W * 0.22, w: W * 0.1, h: H * 0.28 },
-                    { x: W * 0.35, w: W * 0.18, h: H * 0.18 },
-                    { x: W * 0.55, w: W * 0.12, h: H * 0.25 },
-                    { x: W * 0.7, w: W * 0.16, h: H * 0.22 },
-                    { x: W * 0.88, w: W * 0.1, h: H * 0.3 },
-                ];
-                for (const b of buildings) {
-                    ctx.fillRect(b.x, H * 0.04, b.w, b.h);
-                    // Fenster
-                    ctx.fillStyle = 'rgba(255,200,100,0.3)';
-                    for (let fy = H * 0.06; fy < H * 0.04 + b.h; fy += 18) {
-                        for (let fx = b.x + 8; fx < b.x + b.w - 6; fx += 16) {
-                            if (Math.random() < 0.6) {
-                                ctx.fillRect(fx, fy, 8, 10);
-                            }
-                        }
-                    }
-                    ctx.fillStyle = '#1a1a1a';
-                }
-
-                // Straßenlaterne
-                ctx.fillStyle = '#2a2a2a';
-                ctx.fillRect(W * 0.15, H * 0.02, 4, H * 0.1);
-                ctx.fillStyle = '#ffdd57';
-                ctx.beginPath();
-                ctx.arc(W * 0.15 + 2, H * 0.02, 12, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = 'rgba(255,220,100,0.15)';
-                ctx.beginPath();
-                ctx.arc(W * 0.15 + 2, H * 0.02, 35, 0, Math.PI * 2);
-                ctx.fill();
             }
 
             function render() {
                 ctx.clearRect(0, 0, W, H);
-
                 drawBackground();
                 drawField();
                 drawWalls();
@@ -1411,37 +1123,16 @@
                 drawPlayer(enemy);
                 drawPlayer(player);
                 drawParticles(ctx);
-
-                // Feld-Markierungen
-                ctx.fillStyle = 'rgba(255,255,255,0.15)';
-                [
-                    { x: fieldX + 15, y: fieldY + fieldH / 2 },
-                    { x: fieldX + fieldW - 15, y: fieldY + fieldH / 2 },
-                ].forEach(corner => {
-                    ctx.beginPath();
-                    ctx.arc(corner.x, corner.y, 18, -Math.PI / 2, 0);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                });
             }
 
-            // ──────────────────────────────────────
-            // GAME LOOP
-            // ──────────────────────────────────────
             function gameLoop(timestamp) {
-                let dt = (timestamp - lastTime) / 1000;
-                if (dt <= 0) dt = 0.016;
+                const dt = Math.min(0.1, (timestamp - lastTime) / 1000) || 0.016;
                 lastTime = timestamp;
-
                 update(dt);
                 render();
                 requestAnimationFrame(gameLoop);
             }
 
-            // ──────────────────────────────────────
-            // INIT
-            // ──────────────────────────────────────
             function init() {
                 resizeCanvas();
                 updateFieldDimensions();
@@ -1459,14 +1150,8 @@
                 updateGoalPositions();
             });
 
-            // Start
-            showMessage('⚽ Straßenfußball ⚽', 'Zieh den Joystick & schieß!', 3.0);
+            showMessage('⚽ Straßenfußball ⚽', 'Joystick + Schuss / Sprint', 3.5);
             requestAnimationFrame(gameLoop);
-
-            console.log('🔥 Straßenfußball bereit!');
-            console.log('📱 Mobile: Joystick links + SCHUSS/SPRINT rechts');
-            console.log('⌨️  Desktop: WASD + Leertaste (Schuss) + Shift (Sprint)');
-            console.log('⚽ Schieße den Ball ins obere Tor!');
         })();
     </script>
 </body>
