@@ -2,1157 +2,324 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Straßenfußball – Street Kick</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Fußball Mobil</title>
     <style>
-        :root {
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        body { margin: 0; overflow: hidden; background-color: #111; touch-action: none; font-family: sans-serif; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; }
+        
+        /* Menü Overlay */
+        #menuOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10; color: white;
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
+        .menu-box {
+            background: #222; padding: 20px; border-radius: 15px; text-align: center;
+            border: 2px solid #444;
         }
-
-        body {
-            background: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            font-family: 'Arial', sans-serif;
-            touch-action: manipulation;
-            position: relative;
+        .team-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;
         }
-
-        #gameContainer {
-            position: relative;
-            width: 100vw;
-            max-width: 500px;
-            height: 100vh;
-            height: 100dvh;
-            max-height: 850px;
-            aspect-ratio: 9/16;
-            overflow: hidden;
-            border-radius: 8px;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
+        .team-btn {
+            background: #2ecc71; color: white; border: none; padding: 15px 20px;
+            border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 0 #27ae60;
         }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: #2d2d2d;
-            border-radius: 8px;
-        }
-
-        /* UI Overlay */
-        #uiLayer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        #scoreBoard {
-            position: absolute;
-            top: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            pointer-events: none;
-        }
-
-        .scoreBox {
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 16px;
-            padding: 10px 20px;
-            text-align: center;
-            min-width: 60px;
-        }
-
-        .scoreLabel {
-            color: #aaa;
-            font-size: 11px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .scoreValue {
-            color: #fff;
-            font-size: 36px;
-            font-weight: 900;
-            line-height: 1;
-        }
-
-        .scoreDivider {
-            color: #fff;
-            font-size: 28px;
-            font-weight: 900;
-        }
-
-        #messageBox {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            color: #fff;
-            padding: 20px 35px;
-            border-radius: 20px;
-            font-size: 22px;
-            font-weight: bold;
-            text-align: center;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            pointer-events: none;
-        }
-        #messageBox.show {
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        #messageSub {
-            font-size: 13px;
-            font-weight: normal;
-            color: #ccc;
-            margin-top: 5px;
-        }
-
-        /* Touch Controls */
-        #touchControls {
-            position: absolute;
-            bottom: 30px;
-            bottom: calc(30px + var(--safe-bottom));
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            padding: 0 20px;
-            pointer-events: none;
-            z-index: 20;
-        }
-
+        .team-btn:active { transform: translateY(4px); box-shadow: none; }
+        .team-btn.swe { background: #f1c40f; box-shadow: 0 4px 0 #f39c12; }
+        .team-btn.cro { background: #e74c3c; box-shadow: 0 4px 0 #c0392b; }
+        
+        /* Mobile Touch Steuerung */
         #joystickZone {
-            width: 130px;
-            height: 130px;
-            position: relative;
-            pointer-events: auto;
+            position: absolute; bottom: 30px; left: 30px; width: 140px; height: 140px;
+            background: rgba(255,255,255,0.2); border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); z-index: 5;
         }
-
-        #joystickBase {
-            position: absolute;
-            width: 110px;
-            height: 110px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 3px solid rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-        }
-
-        #joystickThumb {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            background: radial-gradient(circle at 40% 35%, #fff, #ccc);
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            transition: box-shadow 0.1s;
-            cursor: pointer;
-        }
-        #joystickThumb.active {
-            box-shadow: 0 2px 25px rgba(255, 200, 50, 0.8);
-        }
-
         #actionButtons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            pointer-events: auto;
-            align-items: center;
+            position: absolute; bottom: 40px; right: 30px; display: flex; flex-direction: column; gap: 15px; z-index: 5;
         }
-
-        .actionBtn {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.5);
-            font-weight: 900;
-            font-size: 15px;
-            letter-spacing: 1px;
-            cursor: pointer;
-            pointer-events: auto;
-            transition: all 0.1s;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            position: relative;
-            overflow: hidden;
+        .action-btn {
+            width: 70px; height: 70px; border-radius: 50%; border: 3px solid white;
+            background: rgba(0,0,0,0.4); color: white; font-weight: bold; font-size: 14px;
+            display: flex; justify-content: center; align-items: center; text-shadow: 1px 1px 2px black;
+            user-select: none; -webkit-user-select: none;
         }
-
-        #btnShoot {
-            background: radial-gradient(circle at 40% 35%, #ff4444, #b71c1c);
-            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
-            font-size: 14px;
+        .action-btn:active { transform: scale(0.9); }
+        #shootBtn { background: rgba(255, 0, 0, 0.6); border-color: #ff4444; }
+        #passBtn { background: rgba(0, 180, 255, 0.6); border-color: #00aaff; }
+        
+        #scoreBoard {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: white; padding: 8px 20px; border-radius: 20px;
+            font-weight: bold; z-index: 5; text-align: center;
         }
-        #btnShoot:active {
-            transform: scale(0.9);
-            box-shadow: 0 3px 10px rgba(255, 0, 0, 0.7);
-            background: radial-gradient(circle at 40% 35%, #ff6666, #d32f2f);
-        }
-
-        #btnSprint {
-            background: radial-gradient(circle at 40% 35%, #ffaa00, #e65100);
-            box-shadow: 0 6px 20px rgba(255, 150, 0, 0.4);
-            font-size: 12px;
-            width: 60px;
-            height: 60px;
-        }
-        #btnSprint:active {
-            transform: scale(0.9);
-            box-shadow: 0 3px 10px rgba(255, 150, 0, 0.7);
-            background: radial-gradient(circle at 40% 35%, #ffcc00, #ff6d00);
-        }
-
-        @media (max-width: 380px) {
-            #joystickZone {
-                width: 110px;
-                height: 110px;
-            }
-            #joystickBase {
-                width: 90px;
-                height: 90px;
-            }
-            #joystickThumb {
-                width: 42px;
-                height: 42px;
-            }
-            .actionBtn {
-                width: 58px;
-                height: 58px;
-                font-size: 12px;
-            }
-            #btnSprint {
-                width: 50px;
-                height: 50px;
-                font-size: 10px;
-            }
-            #touchControls {
-                padding: 0 12px;
-            }
+        @media (max-width: 600px) {
+            .action-btn { width: 60px; height: 60px; font-size: 12px; }
+            #joystickZone { width: 100px; height: 100px; left: 20px; bottom: 30px; }
         }
     </style>
+    <!-- Three.js 3D Engine & Nipple.js Joystick -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
 </head>
 <body>
-
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-
-        <div id="scoreBoard">
-            <div class="scoreBox">
-                <div class="scoreLabel">Du</div>
-                <div class="scoreValue" id="scorePlayer">0</div>
+    <!-- Start-Menü -->
+    <div id="menuOverlay">
+        <div class="menu-box">
+            <h2>🏆 Wähle dein Team</h2>
+            <div class="team-grid">
+                <button class="team-btn" onclick="startGame('GER')">🇩🇪 Deutschland</button>
+                <button class="team-btn swe" onclick="startGame('SWE')">🇸🇪 Schweden</button>
+                <button class="team-btn cro" onclick="startGame('CRO')">🇭🇷 Kroatien</button>
+                <button class="team-btn" onclick="startGame('TUR')">🇹🇷 Türkei</button>
             </div>
-            <div class="scoreDivider">:</div>
-            <div class="scoreBox">
-                <div class="scoreLabel">Gegner</div>
-                <div class="scoreValue" id="scoreEnemy">0</div>
-            </div>
-        </div>
-
-        <div id="messageBox">
-            <div id="messageText">TOR!</div>
-            <div id="messageSub"></div>
-        </div>
-
-        <div id="touchControls">
-            <div id="joystickZone">
-                <div id="joystickBase"></div>
-                <div id="joystickThumb"></div>
-            </div>
-            <div id="actionButtons">
-                <button class="actionBtn" id="btnShoot">SCHUSS</button>
-                <button class="actionBtn" id="btnSprint">SPRINT</button>
-            </div>
+            <p style="margin-top: 15px; font-size: 12px; color: #aaa;">Handy-Steuerung: Links Laufen, Rechts Aktionen</p>
         </div>
     </div>
 
+    <!-- UI -->
+    <div id="scoreBoard">0 : 0</div>
+    <div id="joystickZone"></div>
+    <div id="actionButtons">
+        <div class="action-btn" id="passBtn">PASS</div>
+        <div class="action-btn" id="shootBtn">SCHUSS</div>
+    </div>
+    <div id="gameCanvas"></div>
+
     <script>
-        (function() {
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
-            const container = document.getElementById('gameContainer');
+        let scene, camera, renderer, clock;
+        let player, ball, opponent, goalKeeper;
+        let ballSpeed = new THREE.Vector3(0,0,0);
+        let moveVelocity = new THREE.Vector3(0,0,0);
+        let gameActive = false;
+        let score = { us: 0, them: 0 };
 
-            let W, H;
-            const scale = 2;
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); // Himmel blau
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 25, 15);
+            camera.lookAt(0, 0, 0);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('gameCanvas').appendChild(renderer.domElement);
+            clock = new THREE.Clock();
 
-            function resizeCanvas() {
-                const rect = container.getBoundingClientRect();
-                W = rect.width;
-                H = rect.height;
-                canvas.width = W * scale;
-                canvas.height = H * scale;
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.scale(scale, scale);
+            // Licht
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(20, 40, 20);
+            scene.add(dirLight);
+
+            // Feld
+            const pitchGeo = new THREE.PlaneGeometry(40, 60);
+            const pitchMat = new THREE.MeshLambertMaterial({ color: 0x2ecc71 });
+            const pitch = new THREE.Mesh(pitchGeo, pitchMat);
+            pitch.rotation.x = -Math.PI / 2;
+            scene.add(pitch);
+            
+            // Spielfeld Linien (Vereinfacht)
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            // Mittelkreis
+            const circleGeo = new THREE.RingGeometry(3.5, 3.8, 32);
+            const circle = new THREE.Mesh(circleGeo, lineMat);
+            circle.rotation.x = -Math.PI / 2;
+            circle.position.z = 0;
+            scene.add(circle);
+
+            // Spieler & Gegner
+            const playerGeo = new THREE.CylinderGeometry(0.6, 0.8, 1.2, 8);
+            const playerMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+            player = new THREE.Mesh(playerGeo, playerMat);
+            player.position.set(0, 0.6, 15);
+            scene.add(player);
+
+            const oppMat = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+            opponent = new THREE.Mesh(playerGeo, oppMat);
+            opponent.position.set(0, 0.6, -15);
+            scene.add(opponent);
+
+            // Ball
+            const ballGeo = new THREE.SphereGeometry(0.5, 16, 16);
+            const ballMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+            ball = new THREE.Mesh(ballGeo, ballMat);
+            ball.position.set(0, 0.5, 10);
+            scene.add(ball);
+
+            // Tore & Torwart
+            createGoalsAndKeeper();
+
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function createGoalsAndKeeper() {
+            const goalMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            // Tor Pfosten Vorderseite (visuell)
+            const postGeo = new THREE.BoxGeometry(0.2, 2, 0.2);
+            for(let z of [-25, 25]) {
+                for(let x of [-3.5, 3.5]) {
+                    let post = new THREE.Mesh(postGeo, goalMat);
+                    post.position.set(x, 1, z);
+                    scene.add(post);
+                }
             }
-            resizeCanvas();
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-                updateFieldDimensions();
+
+            // Torwart (Ein Würfel)
+            const gkGeo = new THREE.BoxGeometry(2.5, 1.5, 1);
+            const gkMat = new THREE.MeshLambertMaterial({ color: 0xffff00 });
+            goalKeeper = new THREE.Mesh(gkGeo, gkMat);
+            goalKeeper.position.set(0, 0.75, -25);
+            scene.add(goalKeeper);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Steuerung & Interaktion
+        function setupControls() {
+            // Joystick
+            let joystick = nipplejs.create({
+                zone: document.getElementById('joystickZone'),
+                mode: 'static',
+                position: { left: '50%', top: '50%' },
+                color: 'white'
             });
-            window.addEventListener('orientationchange', () => {
-                setTimeout(() => {
-                    resizeCanvas();
-                    updateFieldDimensions();
-                }, 300);
+            joystick.on('move', (evt, data) => {
+                if(!gameActive) return;
+                const force = data.force;
+                const angle = data.angle.radian;
+                // Map joystick to movement
+                let speed = force * 8;
+                moveVelocity.x = Math.cos(angle) * speed;
+                moveVelocity.z = Math.sin(angle) * speed;
+            });
+            joystick.on('end', () => {
+                moveVelocity.x = 0; moveVelocity.z = 0;
             });
 
-            // ──────────── SPIELFELD (GRÖSSER) ────────────
-            let fieldX, fieldY, fieldW, fieldH;
-            let goalWidth, goalDepth;
-            let wallThickness;
-
-            function updateFieldDimensions() {
-                // Feld nimmt jetzt mehr Platz ein
-                fieldW = W * 0.94;
-                fieldH = H * 0.84;
-                fieldX = (W - fieldW) / 2;
-                fieldY = (H - fieldH) / 2 + H * 0.01;
-                goalWidth = fieldW * 0.26;
-                goalDepth = fieldW * 0.07;
-                wallThickness = W * 0.022;
-            }
-            updateFieldDimensions();
-
-            // ──────────── SPIELZUSTAND ────────────
-            let scorePlayer = 0;
-            let scoreEnemy = 0;
-            let gamePaused = false;
-            let pauseTimer = 0;
-            let messageActive = false;
-            let messageTimer = 0;
-
-            const player = {
-                x: 0, y: 0,
-                radius: 14,
-                maxSpeed: 180,
-                sprintMultiplier: 1.55,
-                vx: 0, vy: 0,
-                color: '#4fc3f7',
-                darkColor: '#0277bd',
-                sprinting: false,
-                shootCooldown: 0,
-                kickPower: 480,
-            };
-
-            const enemy = {
-                x: 0, y: 0,
-                radius: 14,
-                maxSpeed: 135,
-                sprintMultiplier: 1.45,
-                vx: 0, vy: 0,
-                color: '#ef5350',
-                darkColor: '#b71c1c',
-                sprinting: false,
-                shootCooldown: 0,
-                kickPower: 360,
-                aiState: 'chase',
-                aiTimer: 0,
-                aiStuckTimer: 0,
-            };
-
-            const ball = {
-                x: 0, y: 0,
-                radius: 9,
-                vx: 0, vy: 0,
-                friction: 0.94,
-                bounceDamping: 0.6,
-                color: '#ffffff',
-                trail: [],
-                maxTrail: 8,
-            };
-
-            const goalPlayer = { x: 0, y: 0, w: 0, h: 0 };
-            const goalEnemy = { x: 0, y: 0, w: 0, h: 0 };
-
-            function updateGoalPositions() {
-                goalPlayer.x = fieldX + fieldW / 2 - goalWidth / 2;
-                goalPlayer.y = fieldY + fieldH - wallThickness;
-                goalPlayer.w = goalWidth;
-                goalPlayer.h = goalDepth;
-
-                goalEnemy.x = fieldX + fieldW / 2 - goalWidth / 2;
-                goalEnemy.y = fieldY - goalDepth + wallThickness;
-                goalEnemy.w = goalWidth;
-                goalEnemy.h = goalDepth;
-            }
-            updateGoalPositions();
-
-            let particles = [];
-
-            function spawnParticles(x, y, count, color, spread) {
-                for (let i = 0; i < count; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * spread + spread * 0.3;
-                    particles.push({
-                        x, y,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        life: 1,
-                        decay: 0.02 + Math.random() * 0.04,
-                        radius: 2 + Math.random() * 4,
-                        color: color,
-                    });
-                }
-            }
-
-            function updateParticles(dt) {
-                for (let i = particles.length - 1; i >= 0; i--) {
-                    const p = particles[i];
-                    p.x += p.vx * dt;
-                    p.y += p.vy * dt;
-                    p.life -= p.decay;
-                    if (p.life <= 0) particles.splice(i, 1);
-                }
-            }
-
-            function drawParticles(ctx) {
-                for (const p of particles) {
-                    ctx.save();
-                    ctx.globalAlpha = p.life;
-                    ctx.fillStyle = p.color;
-                    ctx.shadowColor = p.color;
-                    ctx.shadowBlur = 6;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.restore();
-                }
-            }
-
-            function dist(a, b) {
-                return Math.hypot(a.x - b.x, a.y - b.y);
-            }
-
-            function clamp(val, min, max) {
-                return Math.max(min, Math.min(max, val));
-            }
-
-            function resetPositions() {
-                const cx = fieldX + fieldW / 2;
-                const cy = fieldY + fieldH / 2;
-                player.x = cx;
-                player.y = cy + fieldH * 0.25;
-                player.vx = player.vy = 0;
-                player.sprinting = false;
-                player.shootCooldown = 0;
-
-                enemy.x = cx;
-                enemy.y = cy - fieldH * 0.25;
-                enemy.vx = enemy.vy = 0;
-                enemy.sprinting = false;
-                enemy.shootCooldown = 1.5;
-                enemy.aiState = 'chase';
-                enemy.aiTimer = 0;
-                enemy.aiStuckTimer = 0;
-
-                ball.x = cx;
-                ball.y = cy;
-                ball.vx = (Math.random() - 0.5) * 80;
-                ball.vy = (Math.random() - 0.5) * 80;
-                ball.trail = [];
-                particles = [];
-            }
-
-            function showMessage(msg, sub = '', duration = 2.0) {
-                document.getElementById('messageText').textContent = msg;
-                document.getElementById('messageSub').textContent = sub;
-                document.getElementById('messageBox').classList.add('show');
-                messageActive = true;
-                messageTimer = duration;
-            }
-
-            function hideMessage() {
-                messageActive = false;
-                document.getElementById('messageBox').classList.remove('show');
-            }
-
-            function updateScoreDisplay() {
-                document.getElementById('scorePlayer').textContent = scorePlayer;
-                document.getElementById('scoreEnemy').textContent = scoreEnemy;
-            }
-
-            // ──────────── TOR & PAUSE ────────────
-            function triggerGoal(scorer) {
-                if (gamePaused) return;
-                gamePaused = true;
-                pauseTimer = 2.0; // 2 Sekunden Pause nach Tor
-
-                if (scorer === 'player') {
-                    scorePlayer++;
-                    spawnParticles(ball.x, ball.y, 35, '#4fc3f7', 220);
-                    spawnParticles(ball.x, ball.y, 20, '#ffffff', 150);
-                    showMessage('TOOOOR! 🎉', 'Du triffst!', 2.0);
-                } else {
-                    scoreEnemy++;
-                    spawnParticles(ball.x, ball.y, 35, '#ef5350', 220);
-                    spawnParticles(ball.x, ball.y, 20, '#ffffff', 150);
-                    showMessage('Gegentor... 😞', 'Der Gegner trifft', 2.0);
-                }
-                updateScoreDisplay();
-                resetPositions();
-            }
-
-            function checkGoal() {
-                if (gamePaused) return;
-                // Gegner-Tor (oben) – Spieler punktet
-                if (ball.y - ball.radius < goalEnemy.y + goalEnemy.h &&
-                    ball.y + ball.radius > goalEnemy.y &&
-                    ball.x > goalEnemy.x - ball.radius &&
-                    ball.x < goalEnemy.x + goalEnemy.w + ball.radius &&
-                    ball.y < fieldY + fieldH * 0.1) {
-                    triggerGoal('player');
-                    return;
-                }
-                // Spieler-Tor (unten) – Gegner punktet
-                if (ball.y + ball.radius > goalPlayer.y &&
-                    ball.y - ball.radius < goalPlayer.y + goalPlayer.h &&
-                    ball.x > goalPlayer.x - ball.radius &&
-                    ball.x < goalPlayer.x + goalPlayer.w + ball.radius &&
-                    ball.y > fieldY + fieldH * 0.9) {
-                    triggerGoal('enemy');
-                    return;
-                }
-            }
-
-            // ──────────── KOLLISIONEN (DRIBBLING-FREUNDLICH) ────────────
-            function handleBallWallCollision() {
-                const leftWall = fieldX;
-                const rightWall = fieldX + fieldW;
-                const topWall = fieldY;
-                const bottomWall = fieldY + fieldH;
-
-                if (ball.x - ball.radius < leftWall) {
-                    ball.x = leftWall + ball.radius;
-                    ball.vx = Math.abs(ball.vx) * ball.bounceDamping;
-                    spawnParticles(ball.x, ball.y, 5, '#cccccc', 60);
-                }
-                if (ball.x + ball.radius > rightWall) {
-                    ball.x = rightWall - ball.radius;
-                    ball.vx = -Math.abs(ball.vx) * ball.bounceDamping;
-                    spawnParticles(ball.x, ball.y, 5, '#cccccc', 60);
-                }
-
-                const inGoalEnemyX = ball.x > goalEnemy.x - ball.radius && ball.x < goalEnemy.x + goalEnemy.w + ball.radius;
-                if (ball.y - ball.radius < topWall && !inGoalEnemyX) {
-                    ball.y = topWall + ball.radius;
-                    ball.vy = Math.abs(ball.vy) * ball.bounceDamping;
-                }
-                const inGoalPlayerX = ball.x > goalPlayer.x - ball.radius && ball.x < goalPlayer.x + goalPlayer.w + ball.radius;
-                if (ball.y + ball.radius > bottomWall && !inGoalPlayerX) {
-                    ball.y = bottomWall - ball.radius;
-                    ball.vy = -Math.abs(ball.vy) * ball.bounceDamping;
-                }
-                if (inGoalEnemyX && ball.y - ball.radius < goalEnemy.y) {
-                    ball.y = goalEnemy.y + ball.radius;
-                    ball.vy = Math.abs(ball.vy) * 0.5;
-                }
-                if (inGoalPlayerX && ball.y + ball.radius > goalPlayer.y + goalPlayer.h) {
-                    ball.y = goalPlayer.y + goalPlayer.h - ball.radius;
-                    ball.vy = -Math.abs(ball.vy) * 0.5;
-                }
-            }
-
-            function handleBallPlayerCollision(p) {
-                const d = dist(ball, p);
-                const minDist = ball.radius + p.radius;
-                if (d >= minDist) return;
-
-                // Trennen
-                const overlap = minDist - d;
-                const nx = (ball.x - p.x) / (d || 1);
-                const ny = (ball.y - p.y) / (d || 1);
-                ball.x += nx * overlap;
-                ball.y += ny * overlap;
-
-                // Sanfte Dribbling-Physik: Wenn Spieler nicht sprintet, bleibt der Ball nah
-                if (!p.sprinting) {
-                    // Mische Ballgeschwindigkeit mit der des Spielers (Kontrolle)
-                    const blend = 0.15;
-                    ball.vx = ball.vx * (1 - blend) + p.vx * blend;
-                    ball.vy = ball.vy * (1 - blend) + p.vy * blend;
-                    // Leichte Rückpralldämpfung
-                    ball.vx *= 0.92;
-                    ball.vy *= 0.92;
-                } else {
-                    // Sprint: stärkerer Impuls, aber nicht zu extrem
-                    const relVx = ball.vx - p.vx;
-                    const relVy = ball.vy - p.vy;
-                    const relVelAlongNormal = relVx * nx + relVy * ny;
-                    if (relVelAlongNormal < 0) {
-                        const impulse = relVelAlongNormal * 1.1;
-                        ball.vx -= impulse * nx;
-                        ball.vy -= impulse * ny;
-                    }
-                }
-
-                const ballSpeed = Math.hypot(ball.vx, ball.vy);
-                const maxBallSpeed = 750;
-                if (ballSpeed > maxBallSpeed) {
-                    const s = maxBallSpeed / ballSpeed;
-                    ball.vx *= s;
-                    ball.vy *= s;
-                }
-            }
-
-            function handlePlayerWallCollision(p) {
-                const margin = p.radius;
-                p.x = clamp(p.x, fieldX + margin, fieldX + fieldW - margin);
-                p.y = clamp(p.y, fieldY + margin, fieldY + fieldH - margin);
-
-                const inGoalEnemyX = p.x > goalEnemy.x && p.x < goalEnemy.x + goalEnemy.w;
-                const inGoalPlayerX = p.x > goalPlayer.x && p.x < goalPlayer.x + goalPlayer.w;
-                if (inGoalEnemyX && p.y < fieldY + margin) p.y = fieldY + margin;
-                if (inGoalPlayerX && p.y > fieldY + fieldH - margin) p.y = fieldY + fieldH - margin;
-            }
-
-            // ──────────── KI (VERBESSERT) ────────────
-            function updateAI(dt) {
-                if (gamePaused) return;
-
-                enemy.aiTimer -= dt;
-                enemy.aiStuckTimer += dt;
-
-                // Anti-Stuck: Wenn Gegner zu lange in der Nähe einer Ecke festhängt, zurück zur Mitte
-                const distToCenter = Math.hypot(enemy.x - (fieldX + fieldW/2), enemy.y - (fieldY + fieldH/2));
-                const nearCorner = (enemy.x < fieldX + 40 || enemy.x > fieldX + fieldW - 40) &&
-                                   (enemy.y < fieldY + 40 || enemy.y > fieldY + fieldH - 40);
-                if (nearCorner && enemy.aiStuckTimer > 2.5) {
-                    enemy.aiState = 'retreat';
-                    enemy.aiTimer = 1.2;
-                    enemy.aiStuckTimer = 0;
-                }
-
-                if (enemy.aiTimer <= 0) {
-                    const distToBall = dist(enemy, ball);
-                    const ballInEnemyHalf = ball.y < fieldY + fieldH/2;
-
-                    if (distToBall < 130 && ballInEnemyHalf) {
-                        enemy.aiState = Math.random() < 0.7 ? 'chase' : 'attack';
-                    } else if (ballInEnemyHalf && distToBall < 220) {
-                        enemy.aiState = 'defend';
-                    } else {
-                        enemy.aiState = Math.random() < 0.6 ? 'chase' : 'defend';
-                    }
-                    enemy.aiTimer = 0.8 + Math.random() * 1.2;
-                }
-
-                let targetX, targetY;
-                const safeMinX = fieldX + 35;
-                const safeMaxX = fieldX + fieldW - 35;
-                const safeMinY = fieldY + 35;
-                const safeMaxY = fieldY + fieldH - 35;
-
-                switch (enemy.aiState) {
-                    case 'chase':
-                        targetX = ball.x;
-                        targetY = ball.y;
-                        enemy.sprinting = dist(enemy, ball) > 100;
-                        break;
-                    case 'defend':
-                        targetX = clamp(ball.x, goalEnemy.x + 30, goalEnemy.x + goalEnemy.w - 30);
-                        targetY = goalEnemy.y + goalEnemy.h + 45;
-                        enemy.sprinting = dist(enemy, ball) < 70;
-                        break;
-                    case 'attack':
-                        targetX = ball.x;
-                        targetY = ball.y;
-                        enemy.sprinting = true;
-                        break;
-                    case 'retreat':
-                        targetX = fieldX + fieldW/2;
-                        targetY = fieldY + fieldH/2;
-                        enemy.sprinting = false;
-                        break;
-                    default:
-                        targetX = ball.x;
-                        targetY = ball.y;
-                }
-
-                targetX = clamp(targetX, safeMinX, safeMaxX);
-                targetY = clamp(targetY, safeMinY, safeMaxY);
-
-                const dx = targetX - enemy.x;
-                const dy = targetY - enemy.y;
-                const d = Math.hypot(dx, dy);
-                if (d > 4) {
-                    const speed = enemy.maxSpeed * (enemy.sprinting ? enemy.sprintMultiplier : 1);
-                    enemy.vx = (dx / d) * speed;
-                    enemy.vy = (dy / d) * speed;
-                } else {
-                    enemy.vx *= 0.85;
-                    enemy.vy *= 0.85;
-                }
-
-                // Schießen mit Zufallsfehler und längerer Cooldown
-                const canShoot = dist(enemy, ball) < enemy.radius + ball.radius + 18 && enemy.shootCooldown <= 0;
-                if (canShoot && !gamePaused) {
-                    const toGoalX = goalPlayer.x + goalPlayer.w/2 - ball.x;
-                    const toGoalY = goalPlayer.y - ball.y;
-                    const goalDist = Math.hypot(toGoalX, toGoalY);
-                    if (goalDist > 0) {
-                        // Streuung einbauen
-                        const inaccuracy = (Math.random() - 0.5) * 0.35;
-                        const angle = Math.atan2(toGoalY, toGoalX) + inaccuracy;
-                        const power = enemy.kickPower * (enemy.sprinting ? 1.3 : 1);
-                        ball.vx += Math.cos(angle) * power;
-                        ball.vy += Math.sin(angle) * power;
-                        enemy.shootCooldown = 1.8 + Math.random() * 1.2; // längere Pause
-                        spawnParticles(ball.x, ball.y, 12, '#ff8a80', 150);
-                    }
-                }
-                if (enemy.shootCooldown > 0) enemy.shootCooldown -= dt;
-            }
-
-            // ──────────── STEUERUNG (wie zuvor) ────────────
-            const joystickZone = document.getElementById('joystickZone');
-            const joystickThumb = document.getElementById('joystickThumb');
-            const joystickBase = document.getElementById('joystickBase');
-            const btnShoot = document.getElementById('btnShoot');
-            const btnSprint = document.getElementById('btnSprint');
-
-            let joystickActive = false, joystickId = null, joystickDX = 0, joystickDY = 0;
-            let shootPressed = false, sprintPressed = false;
-
-            function getJoystickCenter() {
-                const rect = joystickBase.getBoundingClientRect();
-                return {
-                    x: rect.left + rect.width/2,
-                    y: rect.top + rect.height/2,
-                    maxR: rect.width/2 - 25,
-                };
-            }
-
-            function updateJoystickThumb(clientX, clientY) {
-                const center = getJoystickCenter();
-                let dx = clientX - center.x, dy = clientY - center.y;
-                const distFromCenter = Math.hypot(dx, dy);
-                if (distFromCenter > center.maxR) {
-                    dx = (dx / distFromCenter) * center.maxR;
-                    dy = (dy / distFromCenter) * center.maxR;
-                }
-                joystickDX = dx / center.maxR;
-                joystickDY = dy / center.maxR;
-                joystickThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            }
-
-            function resetJoystick() {
-                joystickActive = false;
-                joystickId = null;
-                joystickDX = joystickDY = 0;
-                joystickThumb.style.transform = 'translate(-50%, -50%)';
-                joystickThumb.classList.remove('active');
-            }
-
-            joystickZone.addEventListener('touchstart', (e) => {
+            // Buttons
+            document.getElementById('shootBtn').addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                if (!joystickActive) {
-                    joystickActive = true;
-                    joystickId = e.changedTouches[0].identifier;
-                    joystickThumb.classList.add('active');
-                    updateJoystickThumb(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                }
-            }, { passive: false });
-            joystickZone.addEventListener('touchmove', (e) => {
+                if(!gameActive) return;
+                // Richtung Spieler zu Ball
+                const dir = new THREE.Vector3().copy(ball.position).sub(player.position);
+                dir.y = 0.5;
+                dir.normalize();
+                ballSpeed.copy(dir.multiplyScalar(20));
+            });
+
+            document.getElementById('passBtn').addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === joystickId) {
-                        updateJoystickThumb(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
-                    }
-                }
-            }, { passive: false });
-            joystickZone.addEventListener('touchend', (e) => {
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === joystickId) resetJoystick();
-                }
+                if(!gameActive) return;
+                const dir = new THREE.Vector3().copy(ball.position).sub(player.position);
+                dir.y = 0;
+                dir.normalize();
+                ballSpeed.copy(dir.multiplyScalar(8));
             });
-            joystickZone.addEventListener('touchcancel', resetJoystick);
+        }
 
-            joystickZone.addEventListener('mousedown', (e) => {
-                if (!joystickActive) {
-                    joystickActive = true;
-                    joystickId = 'mouse';
-                    joystickThumb.classList.add('active');
-                    updateJoystickThumb(e.clientX, e.clientY);
-                }
-            });
-            window.addEventListener('mousemove', (e) => {
-                if (joystickActive && joystickId === 'mouse') updateJoystickThumb(e.clientX, e.clientY);
-            });
-            window.addEventListener('mouseup', () => { if (joystickId === 'mouse') resetJoystick(); });
+        // KI des Torwarts (Springt Links, Rechts, Oben)
+        function updateAI(delta) {
+            if(!ball) return;
+            // Ball auf Tor zulaufen? KI verfolgt X-Position des Balles
+            let targetX = ball.position.x;
+            // Begrenzung Torwart Bereich (-3.5 bis 3.5)
+            if(targetX > 3) targetX = 3;
+            if(targetX < -3) targetX = -3;
+            
+            // Bewegung (Lerp)
+            goalKeeper.position.x += (targetX - goalKeeper.position.x) * 0.05;
 
-            btnShoot.addEventListener('touchstart', (e) => { e.preventDefault(); shootPressed = true; }, { passive: false });
-            btnShoot.addEventListener('touchend', (e) => { e.preventDefault(); shootPressed = false; }, { passive: false });
-            btnShoot.addEventListener('touchcancel', () => { shootPressed = false; });
-            btnShoot.addEventListener('mousedown', () => { shootPressed = true; });
-            btnShoot.addEventListener('mouseup', () => { shootPressed = false; });
-            btnShoot.addEventListener('mouseleave', () => { shootPressed = false; });
-
-            btnSprint.addEventListener('touchstart', (e) => { e.preventDefault(); sprintPressed = true; }, { passive: false });
-            btnSprint.addEventListener('touchend', (e) => { e.preventDefault(); sprintPressed = false; }, { passive: false });
-            btnSprint.addEventListener('touchcancel', () => { sprintPressed = false; });
-            btnSprint.addEventListener('mousedown', () => { sprintPressed = true; });
-            btnSprint.addEventListener('mouseup', () => { sprintPressed = false; });
-            btnSprint.addEventListener('mouseleave', () => { sprintPressed = false; });
-
-            const keys = {};
-            window.addEventListener('keydown', (e) => {
-                keys[e.key.toLowerCase()] = true;
-                if (e.key === ' ' || e.key.toLowerCase() === 'j') shootPressed = true;
-                if (e.key.toLowerCase() === 'k' || e.key === 'Shift') sprintPressed = true;
-            });
-            window.addEventListener('keyup', (e) => {
-                keys[e.key.toLowerCase()] = false;
-                if (e.key === ' ' || e.key.toLowerCase() === 'j') shootPressed = false;
-                if (e.key.toLowerCase() === 'k' || e.key === 'Shift') sprintPressed = false;
-            });
-
-            function getKeyboardInput() {
-                let dx = 0, dy = 0;
-                if (keys['w'] || keys['arrowup']) dy = -1;
-                if (keys['s'] || keys['arrowdown']) dy = 1;
-                if (keys['a'] || keys['arrowleft']) dx = -1;
-                if (keys['d'] || keys['arrowright']) dx = 1;
-                return { dx, dy };
+            // Wenn Ball nahe am Tor ist (Distanz < 5) -> Springen
+            const distToGoal = Math.abs(ball.position.z - goalKeeper.position.z);
+            if(distToGoal < 6) {
+                // Einfacher Sprung (Simuliert Y-Achse nach oben)
+                goalKeeper.position.y = 0.75 + Math.abs(Math.sin(Date.now() * 0.01)) * 2;
+            } else {
+                goalKeeper.position.y = 0.75; // Runter gehen
             }
 
-            // ──────────── UPDATE LOOP ────────────
-            let lastTime = performance.now();
-
-            function update(dt) {
-                if (dt > 0.1) dt = 0.1;
-
-                // Nachrichten
-                if (messageActive) {
-                    messageTimer -= dt;
-                    if (messageTimer <= 0) hideMessage();
-                }
-
-                // Tor-Pause
-                if (gamePaused) {
-                    pauseTimer -= dt;
-                    if (pauseTimer <= 0) gamePaused = false;
-                    // In der Pause nur Partikel updaten, sonst nichts
-                    updateParticles(dt);
-                    return;
-                }
-
-                // ── SPIELER ──
-                let inputDX = joystickDX, inputDY = joystickDY;
-                const kb = getKeyboardInput();
-                if (kb.dx !== 0 || kb.dy !== 0) {
-                    inputDX = kb.dx; inputDY = kb.dy;
-                    const mag = Math.hypot(inputDX, inputDY);
-                    if (mag > 1) { inputDX /= mag; inputDY /= mag; }
-                }
-
-                player.sprinting = sprintPressed;
-                const pSpeed = player.maxSpeed * (player.sprinting ? player.sprintMultiplier : 1);
-                player.vx = inputDX * pSpeed;
-                player.vy = inputDY * pSpeed;
-                player.x += player.vx * dt;
-                player.y += player.vy * dt;
-                handlePlayerWallCollision(player);
-
-                if (shootPressed && player.shootCooldown <= 0 && dist(player, ball) < player.radius + ball.radius + 20) {
-                    const toGoalX = goalEnemy.x + goalEnemy.w/2 - ball.x;
-                    const toGoalY = goalEnemy.y + goalEnemy.h/2 - ball.y;
-                    const goalDist = Math.hypot(toGoalX, toGoalY);
-                    if (goalDist > 0) {
-                        const power = player.kickPower * (player.sprinting ? 1.4 : 1);
-                        ball.vx += (toGoalX / goalDist) * power;
-                        ball.vy += (toGoalY / goalDist) * power;
-                        player.shootCooldown = 0.5;
-                        spawnParticles(ball.x, ball.y, 15, '#81d4fa', 180);
-                    }
-                }
-                if (player.shootCooldown > 0) player.shootCooldown -= dt;
-
-                // ── GEGNER ──
-                updateAI(dt);
-                enemy.x += enemy.vx * dt;
-                enemy.y += enemy.vy * dt;
-                handlePlayerWallCollision(enemy);
-
-                // ── BALL ──
-                ball.vx *= ball.friction;
-                ball.vy *= ball.friction;
-                const ballSpeed = Math.hypot(ball.vx, ball.vy);
-                if (ballSpeed > 750) {
-                    const s = 750 / ballSpeed;
-                    ball.vx *= s; ball.vy *= s;
-                }
-                if (ballSpeed < 3) { ball.vx *= 0.9; ball.vy *= 0.9; }
-
-                ball.x += ball.vx * dt;
-                ball.y += ball.vy * dt;
-
-                if (ballSpeed > 25) {
-                    ball.trail.push({ x: ball.x, y: ball.y, life: 1 });
-                    if (ball.trail.length > ball.maxTrail) ball.trail.shift();
-                }
-                for (let t of ball.trail) t.life -= dt * 2.8;
-
-                handleBallWallCollision();
-                handleBallPlayerCollision(player);
-                handleBallPlayerCollision(enemy);
-                checkGoal();
-                updateParticles(dt);
+            // Kollision Torwart & Ball
+            if(ball.position.distanceTo(goalKeeper.position) < 1.5) {
+                // Ball abprallen lassen
+                ballSpeed.x *= -0.5;
+                ballSpeed.z = -Math.abs(ballSpeed.z);
+                ballSpeed.z -= 5; // Kick back
+                goalKeeper.position.y = 0.75; // Reset spring
             }
+        }
 
-            // ──────────── RENDERING ────────────
-            function drawField() {
-                const asphaltGrad = ctx.createLinearGradient(fieldX, fieldY, fieldX, fieldY + fieldH);
-                asphaltGrad.addColorStop(0, '#4a4a4a');
-                asphaltGrad.addColorStop(0.5, '#555555');
-                asphaltGrad.addColorStop(1, '#3d3d3d');
-                ctx.fillStyle = asphaltGrad;
-                ctx.fillRect(fieldX, fieldY, fieldW, fieldH);
-
-                ctx.fillStyle = 'rgba(255,255,255,0.03)';
-                for (let x = fieldX; x < fieldX + fieldW; x += 18) {
-                    for (let y = fieldY; y < fieldY + fieldH; y += 18) {
-                        if (Math.random() < 0.25) {
-                            ctx.beginPath();
-                            ctx.arc(x + Math.random()*6, y + Math.random()*6, 0.7, 0, Math.PI*2);
-                            ctx.fill();
-                        }
-                    }
-                }
-
-                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-                ctx.lineWidth = 2.5;
-                ctx.setLineDash([12, 18]);
-                ctx.beginPath();
-                ctx.moveTo(fieldX + 10, fieldY + fieldH/2);
-                ctx.lineTo(fieldX + fieldW - 10, fieldY + fieldH/2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(fieldX + fieldW/2, fieldY + fieldH/2, fieldW * 0.17, 0, Math.PI*2);
-                ctx.stroke();
-                ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                ctx.beginPath();
-                ctx.arc(fieldX + fieldW/2, fieldY + fieldH/2, 4.5, 0, Math.PI*2);
-                ctx.fill();
-            }
-
-            function drawWalls() {
-                const wallGradTop = ctx.createLinearGradient(0, fieldY - wallThickness, 0, fieldY);
-                wallGradTop.addColorStop(0, '#5c5c5c'); wallGradTop.addColorStop(1, '#787878');
-                ctx.fillStyle = wallGradTop;
-                ctx.fillRect(fieldX - 5, fieldY - wallThickness, fieldW + 10, wallThickness);
-
-                const wallGradBot = ctx.createLinearGradient(0, fieldY + fieldH, 0, fieldY + fieldH + wallThickness);
-                wallGradBot.addColorStop(0, '#787878'); wallGradBot.addColorStop(1, '#5c5c5c');
-                ctx.fillStyle = wallGradBot;
-                ctx.fillRect(fieldX - 5, fieldY + fieldH, fieldW + 10, wallThickness);
-
-                ctx.fillStyle = '#5c5c5c';
-                ctx.fillRect(fieldX - wallThickness, fieldY - 5, wallThickness, fieldH + 10);
-                ctx.fillStyle = '#787878';
-                ctx.fillRect(fieldX + fieldW, fieldY - 5, wallThickness, fieldH + 10);
-
-                // Ecken & Pfosten
-                ctx.fillStyle = '#3a3a3a';
-                const spacing = 40;
-                for (let x = fieldX; x <= fieldX + fieldW; x += spacing) {
-                    ctx.fillRect(x - 2, fieldY - wallThickness, 4, wallThickness);
-                    ctx.fillRect(x - 2, fieldY + fieldH, 4, wallThickness);
-                }
-            }
-
-            function drawGoals() {
-                const drawOneGoal = (gx, gy, gw, gh) => {
-                    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-                    ctx.fillRect(gx, gy, gw, gh);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-                    ctx.lineWidth = 0.7;
-                    for (let nx = gx; nx <= gx + gw; nx += 12) {
-                        ctx.beginPath(); ctx.moveTo(nx, gy); ctx.lineTo(nx, gy + gh); ctx.stroke();
-                    }
-                    for (let ny = gy; ny <= gy + gh; ny += 12) {
-                        ctx.beginPath(); ctx.moveTo(gx, ny); ctx.lineTo(gx + gw, ny); ctx.stroke();
-                    }
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 3;
-                    ctx.shadowColor = 'rgba(255,255,255,0.5)';
-                    ctx.shadowBlur = 8;
-                    ctx.strokeRect(gx, gy, gw, gh);
-                    ctx.shadowBlur = 0;
-                    ctx.fillStyle = '#e0e0e0';
-                    ctx.fillRect(gx - 4, gy - 2, 8, gh + 4);
-                    ctx.fillRect(gx + gw - 4, gy - 2, 8, gh + 4);
-                    ctx.fillRect(gx - 2, gy - 4, gw + 4, 8);
-                };
-                drawOneGoal(goalEnemy.x, goalEnemy.y, goalEnemy.w, goalEnemy.h);
-                drawOneGoal(goalPlayer.x, goalPlayer.y, goalPlayer.w, goalPlayer.h);
-            }
-
-            function drawPlayer(p) {
-                ctx.save();
-                ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                ctx.beginPath();
-                ctx.ellipse(p.x, p.y + p.radius*0.7, p.radius*0.9, p.radius*0.3, 0, 0, Math.PI*2);
-                ctx.fill();
-
-                const grad = ctx.createRadialGradient(p.x-2, p.y-2, p.radius*0.1, p.x, p.y, p.radius);
-                grad.addColorStop(0, p.color);
-                grad.addColorStop(0.7, p.darkColor);
-                grad.addColorStop(1, '#1a1a1a');
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                if (p.sprinting) {
-                    ctx.strokeStyle = 'rgba(255,200,50,0.8)';
-                    ctx.lineWidth = 3;
-                    ctx.shadowColor = 'rgba(255,200,50,0.7)';
-                    ctx.shadowBlur = 12;
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                }
-                ctx.fillStyle = '#fff';
-                ctx.font = `bold ${p.radius*0.9}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(p === player ? '10' : '9', p.x, p.y);
-                ctx.restore();
-            }
-
-            function drawBall() {
-                ctx.save();
-                for (const t of ball.trail) {
-                    if (t.life > 0) {
-                        ctx.globalAlpha = t.life * 0.4;
-                        ctx.fillStyle = '#ffffff';
-                        ctx.beginPath();
-                        ctx.arc(t.x, t.y, ball.radius * (0.4 + t.life*0.6), 0, Math.PI*2);
-                        ctx.fill();
-                    }
-                }
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.beginPath();
-                ctx.ellipse(ball.x+1, ball.y+1, ball.radius, ball.radius*0.7, 0, 0, Math.PI*2);
-                ctx.fill();
-
-                const ballGrad = ctx.createRadialGradient(ball.x-1, ball.y-2, ball.radius*0.1, ball.x, ball.y, ball.radius);
-                ballGrad.addColorStop(0, '#ffffff');
-                ballGrad.addColorStop(0.5, '#e8e8e8');
-                ballGrad.addColorStop(1, '#999999');
-                ctx.fillStyle = ballGrad;
-                ctx.beginPath();
-                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
-                ctx.fill();
-
-                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-                ctx.lineWidth = 0.6;
-                for (let i = 0; i < 5; i++) {
-                    const angle = (i/5)*Math.PI*2 + ball.x*0.1;
-                    const px = ball.x + Math.cos(angle)*ball.radius*0.55;
-                    const py = ball.y + Math.sin(angle)*ball.radius*0.55;
-                    ctx.beginPath();
-                    ctx.arc(px, py, ball.radius*0.18, 0, Math.PI*2);
-                    ctx.stroke();
-                }
-                ctx.fillStyle = 'rgba(255,255,255,0.6)';
-                ctx.beginPath();
-                ctx.arc(ball.x - ball.radius*0.3, ball.y - ball.radius*0.35, ball.radius*0.28, 0, Math.PI*2);
-                ctx.fill();
-                ctx.restore();
-            }
-
-            function drawBackground() {
-                const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-                bgGrad.addColorStop(0, '#2c2c2c');
-                bgGrad.addColorStop(1, '#262626');
-                ctx.fillStyle = bgGrad;
-                ctx.fillRect(0, 0, W, H);
-            }
-
-            function render() {
-                ctx.clearRect(0, 0, W, H);
-                drawBackground();
-                drawField();
-                drawWalls();
-                drawGoals();
-                drawBall();
-                drawPlayer(enemy);
-                drawPlayer(player);
-                drawParticles(ctx);
-            }
-
-            function gameLoop(timestamp) {
-                const dt = Math.min(0.1, (timestamp - lastTime) / 1000) || 0.016;
-                lastTime = timestamp;
-                update(dt);
-                render();
-                requestAnimationFrame(gameLoop);
-            }
-
-            function init() {
-                resizeCanvas();
-                updateFieldDimensions();
-                updateGoalPositions();
-                resetPositions();
-                updateScoreDisplay();
-                hideMessage();
-                lastTime = performance.now();
-            }
-
-            init();
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-                updateFieldDimensions();
-                updateGoalPositions();
-            });
-
-            showMessage('⚽ Straßenfußball ⚽', 'Joystick + Schuss / Sprint', 3.5);
+        function gameLoop() {
+            if(!gameActive) return;
             requestAnimationFrame(gameLoop);
-        })();
+
+            const delta = clock.getDelta();
+            
+            // Ball Physik
+            ball.position.x += ballSpeed.x * delta;
+            ball.position.z += ballSpeed.z * delta;
+            ballSpeed.x *= 0.985; // Reibung
+            ballSpeed.z *= 0.985;
+            
+            // Begrenzung Ball auf Feld
+            if(Math.abs(ball.position.x) > 18) ballSpeed.x *= -1;
+            if(Math.abs(ball.position.z) > 28) {
+                if(ball.position.z < -25) {
+                    // TOR für uns!
+                    if(ball.position.x > -3 && ball.position.x < 3) {
+                        score.us++; updateScore();
+                    }
+                } else if(ball.position.z > 25) {
+                    // TOR für Gegner
+                    score.them++; updateScore();
+                }
+                ballSpeed.z *= -1;
+                ball.position.z = ball.position.z > 0 ? 24 : -24;
+            }
+
+            // Spieler Bewegung
+            player.position.x += moveVelocity.x * delta;
+            player.position.z += moveVelocity.z * delta;
+            if(Math.abs(player.position.x) > 18) player.position.x *= 0.9;
+            if(Math.abs(player.position.z) > 28) player.position.z *= 0.9;
+
+            // Einfache Gegner KI
+            const dirToBall = new THREE.Vector3().copy(ball.position).sub(opponent.position);
+            dirToBall.y = 0;
+            dirToBall.normalize();
+            opponent.position.x += dirToBall.x * 3 * delta;
+            opponent.position.z += dirToBall.z * 3 * delta;
+            
+            // Kollision Gegner mit Ball
+            if(ball.position.distanceTo(opponent.position) < 1.5) {
+                const kickDir = new THREE.Vector3().copy(opponent.position).sub(ball.position).normalize();
+                ballSpeed.copy(kickDir.multiplyScalar(15));
+            }
+
+            // Kamera leicht hinter dem Spieler halten
+            camera.position.x = player.position.x * 0.5;
+            camera.lookAt(0, 0, 0);
+
+            updateAI(delta);
+            renderer.render(scene, camera);
+        }
+
+        function updateScore() {
+            document.getElementById('scoreBoard').innerHTML = `${score.us} : ${score.them}`;
+        }
+
+        // Spiel starten
+        function startGame(team) {
+            document.getElementById('menuOverlay').style.display = 'none';
+            init3D();
+            setupControls();
+            gameActive = true;
+            gameLoop();
+        }
     </script>
 </body>
 </html>
