@@ -3,377 +3,970 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Fußball - HTML Demo</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>Realistischer Straßenfußball | Roblox</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; user-select: none; }
-        #ui-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center;
-            background: rgba(0, 0, 0, 0.7); z-index: 10;
-            backdrop-filter: blur(5px);
+        :root {
+            --bg: #0a0a0f;
+            --bg2: #12121a;
+            --bg-card: #1a1a28;
+            --green: #00cc66;
+            --green-glow: #00ff88;
+            --gold: #f0c040;
+            --text: #e0e0e0;
+            --text-muted: #999;
+            --border: #2a2a3a;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
+            --shadow-glow: 0 0 40px rgba(0, 204, 102, 0.25);
         }
-        #menu-box {
-            background: #2b2b2b; border: 2px solid #555; border-radius: 12px;
-            padding: 30px; text-align: center; color: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5); width: 400px;
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        #menu-box h2 { margin: 0 0 20px 0; color: #ffcc00; font-size: 24px; }
-        .team-btn {
-            padding: 15px 30px; margin: 10px; font-size: 18px; font-weight: bold;
-            border: none; border-radius: 8px; cursor: pointer; width: 120px;
-            transition: transform 0.1s, box-shadow 0.1s; color: white;
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: #2a2a3a #0a0a0f;
         }
-        .team-btn:hover { transform: scale(1.05); box-shadow: 0 0 10px rgba(255,255,255,0.3); }
-        #btn-croatia { background: #ff0000; border-bottom: 4px solid #ffffff; }
-        #btn-sweden { background: #006eb6; border-bottom: 4px solid #fecb00; }
-        
-        #hud {
-            position: absolute; top: 20px; left: 0; width: 100%; pointer-events: none;
-            text-align: center; color: white; text-shadow: 1px 1px 4px black;
-            font-size: 24px; z-index: 5;
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
-        #hud span { background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 10px; margin: 0 10px; }
-        #instructions {
-            position: absolute; bottom: 20px; left: 20px;
-            color: white; background: rgba(0,0,0,0.6); padding: 10px 15px;
-            border-radius: 8px; font-size: 14px; pointer-events: none; z-index: 5;
-            text-align: left; line-height: 1.5;
+
+        /* ─── ANIMATED BACKGROUND PARTICLES ─── */
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
         }
-        .green-bar-container {
-            width: 200px; height: 20px; background: #333; border-radius: 10px;
-            margin: 10px auto; overflow: hidden; border: 2px solid #555;
+        .particle {
+            position: absolute;
+            background: var(--green);
+            border-radius: 50%;
+            opacity: 0;
+            animation: floatUp 6s infinite ease-in;
         }
-        .green-bar { height: 100%; width: 100%; background: #00ff00; transition: width 0.2s; }
+        @keyframes floatUp {
+            0% {
+                transform: translateY(105vh) scale(0);
+                opacity: 0;
+            }
+            15% {
+                opacity: 0.5;
+            }
+            40% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-10vh) scale(1.4);
+                opacity: 0;
+            }
+        }
+
+        /* ─── NAVIGATION ─── */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+        .nav.scrolled {
+            background: rgba(10, 10, 15, 0.95);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        .nav-inner {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 0 20px rgba(0, 204, 102, 0.5);
+            animation: pulse-icon 2.5s infinite;
+        }
+        @keyframes pulse-icon {
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(0, 204, 102, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
+            }
+        }
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+            align-items: center;
+        }
+        .nav-links a {
+            color: #ccc;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            position: relative;
+            padding: 4px 0;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--green);
+            transition: var(--transition);
+            border-radius: 2px;
+        }
+        .nav-links a:hover {
+            color: #fff;
+        }
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+        .btn-nav {
+            background: var(--green);
+            color: #000 !important;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(0, 204, 102, 0.35);
+        }
+        .btn-nav:hover {
+            background: var(--green-glow);
+            box-shadow: 0 6px 30px rgba(0, 255, 136, 0.55);
+            transform: translateY(-2px);
+        }
+        .btn-nav::after {
+            display: none;
+        }
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 1001;
+            padding: 4px;
+        }
+        .menu-toggle span {
+            display: block;
+            width: 26px;
+            height: 2.5px;
+            background: #fff;
+            border-radius: 3px;
+            transition: var(--transition);
+        }
+        .menu-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+        .menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .menu-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* ─── SECTIONS ─── */
+        section {
+            position: relative;
+            z-index: 1;
+            padding: 100px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-label {
+            display: inline-block;
+            background: rgba(0, 204, 102, 0.1);
+            color: var(--green);
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(0, 204, 102, 0.25);
+        }
+        .section-title {
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+            line-height: 1.2;
+        }
+        .section-subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin-bottom: 48px;
+        }
+
+        /* ─── HERO ─── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 80px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-content {
+            max-width: 800px;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(240, 192, 64, 0.15);
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 18px;
+            border-radius: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(240, 192, 64, 0.3);
+            animation: fadeInDown 0.8s ease-out;
+        }
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--green-glow), #00dd88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 1.25rem;
+            color: #bbb;
+            margin-bottom: 36px;
+            animation: fadeInUp 0.9s ease-out;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeInUp 1s ease-out;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            letter-spacing: -0.3px;
+        }
+        .btn-primary {
+            background: var(--green);
+            color: #000;
+            box-shadow: 0 8px 30px rgba(0, 204, 102, 0.4);
+        }
+        .btn-primary:hover {
+            background: var(--green-glow);
+            box-shadow: 0 12px 40px rgba(0, 255, 136, 0.55);
+            transform: translateY(-3px);
+        }
+        .btn-outline {
+            background: transparent;
+            color: #fff;
+            border: 2px solid #444;
+        }
+        .btn-outline:hover {
+            border-color: var(--green);
+            background: rgba(0, 204, 102, 0.08);
+            transform: translateY(-3px);
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── FEATURES ─── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px 28px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card:hover {
+            border-color: var(--green);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-6px);
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 204, 102, 0.03) 0%, transparent 70%);
+            opacity: 0;
+            transition: var(--transition);
+        }
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .feature-card h3 {
+            font-size: 1.25rem;
+            color: #fff;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* ─── GALLERY ─── */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+        .gallery-item {
+            position: relative;
+            border-radius: var(--radius);
+            overflow: hidden;
+            aspect-ratio: 16/10;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .gallery-item:hover {
+            border-color: var(--green);
+            box-shadow: var(--shadow-glow);
+            transform: scale(1.03);
+        }
+        .gallery-item .img-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            background: linear-gradient(135deg, #1a2a1a, #0f1f0f);
+            color: var(--green);
+            transition: var(--transition);
+        }
+        .gallery-item:hover .img-placeholder {
+            color: var(--green-glow);
+            background: linear-gradient(135deg, #1f301f, #152515);
+        }
+        .gallery-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.7);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #fff;
+            backdrop-filter: blur(6px);
+        }
+
+        /* ─── STATS ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 20px;
+            transition: var(--transition);
+        }
+        .stat-card:hover {
+            border-color: var(--green);
+            box-shadow: var(--shadow-glow);
+        }
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--green-glow);
+            letter-spacing: -1px;
+        }
+        .stat-label {
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        /* ─── FAQ ─── */
+        .faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .faq-question {
+            width: 100%;
+            background: none;
+            border: none;
+            color: #fff;
+            padding: 18px 22px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+            transition: var(--transition);
+        }
+        .faq-question:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .faq-icon {
+            font-size: 1.5rem;
+            transition: var(--transition);
+            color: var(--green);
+            flex-shrink: 0;
+        }
+        .faq-item.open .faq-icon {
+            transform: rotate(45deg);
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            color: var(--text-muted);
+            padding: 0 22px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        .faq-item.open .faq-answer {
+            max-height: 200px;
+            padding: 0 22px 18px;
+        }
+
+        /* ─── CONTACT ─── */
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .contact-form input,
+        .contact-form textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: var(--transition);
+            resize: vertical;
+        }
+        .contact-form input:focus,
+        .contact-form textarea:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 20px rgba(0, 204, 102, 0.1);
+        }
+        .contact-form textarea {
+            min-height: 120px;
+        }
+        .form-success {
+            display: none;
+            text-align: center;
+            color: var(--green-glow);
+            font-weight: 700;
+            padding: 16px;
+            background: rgba(0, 204, 102, 0.08);
+            border-radius: var(--radius-sm);
+            margin-top: 8px;
+        }
+        .form-success.show {
+            display: block;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 40px 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        footer a {
+            color: var(--green);
+            text-decoration: none;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 768px) {
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 70%;
+                max-width: 320px;
+                height: 100vh;
+                background: rgba(10, 10, 15, 0.98);
+                backdrop-filter: blur(30px);
+                flex-direction: column;
+                justify-content: center;
+                gap: 32px;
+                transition: var(--transition);
+                z-index: 1000;
+            }
+            .nav-links.active {
+                right: 0;
+            }
+            .menu-toggle {
+                display: flex;
+            }
+            .hero h1 {
+                font-size: 2.4rem;
+                letter-spacing: -1px;
+            }
+            .hero p {
+                font-size: 1rem;
+            }
+            .section-title {
+                font-size: 2rem;
+            }
+            section {
+                padding: 70px 16px;
+            }
+            .btn {
+                padding: 12px 24px;
+                font-size: 0.9rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.9rem;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Team Selection Menu (UI) -->
-    <div id="ui-overlay">
-        <div id="menu-box">
-            <h2>⚽ TEAM WÄHLEN</h2>
-            <div>
-                <button id="btn-croatia" class="team-btn">Kroatien</button>
-                <button id="btn-sweden" class="team-btn">Schweden</button>
-            </div>
-            <p style="margin-top: 20px; font-size: 12px; color: #888;">(KI-Torwart springt nach links/rechts/oben)</p>
-            <div class="green-bar-container"><div class="green-bar" id="stamina-bar"></div></div>
-            <div style="margin-top: 10px; font-size: 16px; background: #444; padding: 5px; border-radius: 5px;">
-                Tore: <span id="score-display">0</span>
+    <!-- Particles Background -->
+    <div class="particles-container" id="particles"></div>
+
+    <!-- Navigation -->
+    <nav class="nav" id="navbar">
+        <div class="nav-inner">
+            <a href="#" class="logo">
+                <span class="logo-icon">⚽</span> RSF
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#gallery">Galerie</a></li>
+                <li><a href="#stats">Stats</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#contact">Kontakt</a></li>
+                <li><a href="https://www.roblox.com" target="_blank" rel="noopener" class="btn-nav">Jetzt spielen</a></li>
+            </ul>
+            <button class="menu-toggle" id="menuToggle" aria-label="Menü öffnen">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <div class="hero-badge">🏆 Über 500.000 Spieler</div>
+            <h1>Realistischer <span>Straßenfußball</span></h1>
+            <p>Erlebe den authentischsten Straßenfußball auf Roblox – mit realistischer Physik, dynamischem Wetter und packenden Straßen-Matches. Dribble, trickse und dominiere den Asphalt!</p>
+            <div class="hero-buttons">
+                <a href="https://www.roblox.com" target="_blank" rel="noopener" class="btn btn-primary">🎮 Jetzt auf Roblox spielen</a>
+                <a href="#features" class="btn btn-outline">🔍 Mehr erfahren</a>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- In-Game HUD -->
-    <div id="hud">
-        <span id="timer">4:25</span>
-    </div>
-    <div id="instructions">
-        <b>Steuerung:</b><br>
-        WASD: Laufen<br>
-        LEERTASTE: Schießen
-    </div>
+    <!-- Spielbeschreibung -->
+    <section id="about">
+        <span class="section-label">Über das Spiel</span>
+        <h2 class="section-title">Fußball, wie er auf der Straße gespielt wird</h2>
+        <p class="section-subtitle">Kein Rasen, keine Regeln – nur du, der Ball und der Asphalt. „Realistischer Straßenfußball“ bringt die rohe Energie des Straßenfußballs direkt in dein Roblox-Erlebnis. Entwickelt mit Leidenschaft für echten Sport und realistische Bewegungsphysik.</p>
+        <p style="color:var(--text-muted);max-width:700px;">Von engen Hinterhofplätzen bis zu urbanen Käfigen – jedes Spielfeld erzählt eine eigene Geschichte. Passe präzise, schieße mit Effet und feiere Tore mit deinen Freunden im Multiplayer-Modus. Das Spiel wird regelmäßig mit neuen Courts, Skins und Events aktualisiert.</p>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+        <span class="section-label">Features</span>
+        <h2 class="section-title">Was unser Spiel bietet</h2>
+        <p class="section-subtitle">Entdecke die Features, die „Realistischer Straßenfußball“ einzigartig machen.</p>
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">⚡</span>
+                <h3>Realistische Physik</h3>
+                <p>Ballverhalten, Schwerkraft und Kollisionen wurden präzise simuliert – für ein authentisches Fußballgefühl auf der Straße.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🌍</span>
+                <h3>Globale Courts</h3>
+                <p>Spiele auf über 20 einzigartigen Straßenplätzen – von Berliner Hinterhöfen bis zu Tokioter Rooftop-Courts.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">👥</span>
+                <h3>Multiplayer-Modus</h3>
+                <p>Tritt gegen Freunde oder zufällige Spieler in 1v1-, 2v2- oder 3v3-Matches an und steige in der Rangliste auf.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🎨</span>
+                <h3>Charakter-Editor</h3>
+                <p>Passe deinen Spieler mit hunderten von Outfits, Frisuren, Tattoos und exklusiven Jubel-Animationen an.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🌦️</span>
+                <h3>Dynamisches Wetter</h3>
+                <p>Regen, Nebel oder gleißende Sonne – das Wetter beeinflusst das Ballverhalten und die Atmosphäre jedes Matches.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🏆</span>
+                <h3>Turniere & Events</h3>
+                <p>Nimm an wöchentlichen Turnieren teil, gewinne exklusive Belohnungen und verdiene dir Legenden-Status.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Galerie -->
+    <section id="gallery">
+        <span class="section-label">Galerie</span>
+        <h2 class="section-title">Eindrücke aus dem Spiel</h2>
+        <p class="section-subtitle">Ein Blick auf die actiongeladenen Straßenfußball-Matches.</p>
+        <div class="gallery-grid">
+            <div class="gallery-item">
+                <div class="img-placeholder">🏟️</div>
+                <div class="gallery-caption">Berliner Hinterhof-Court</div>
+            </div>
+            <div class="gallery-item">
+                <div class="img-placeholder">🌆</div>
+                <div class="gallery-caption">Rooftop bei Sonnenuntergang</div>
+            </div>
+            <div class="gallery-item">
+                <div class="img-placeholder">🔥</div>
+                <div class="gallery-caption">Intensives 2v2-Match</div>
+            </div>
+            <div class="gallery-item">
+                <div class="img-placeholder">🏆</div>
+                <div class="gallery-caption">Turnier-Finale</div>
+            </div>
+            <div class="gallery-item">
+                <div class="img-placeholder">🌧️</div>
+                <div class="gallery-caption">Regen-Match in Tokyo</div>
+            </div>
+            <div class="gallery-item">
+                <div class="img-placeholder">🎉</div>
+                <div class="gallery-caption">Torjubel-Animation</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistiken -->
+    <section id="stats">
+        <span class="section-label">Statistiken</span>
+        <h2 class="section-title">Die Community in Zahlen</h2>
+        <p class="section-subtitle">Unser Spiel wächst jeden Tag – hier sind die aktuellen Zahlen.</p>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" data-target="520000">0</div>
+                <div class="stat-label">Spieler insgesamt</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" data-target="48000">0</div>
+                <div class="stat-label">Tägliche Matches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" data-target="150">0</div>
+                <div class="stat-label">Einzigartige Courts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" data-target="4.9">0</div>
+                <div class="stat-label">⭐ Bewertung</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+        <span class="section-label">FAQ</span>
+        <h2 class="section-title">Häufig gestellte Fragen</h2>
+        <p class="section-subtitle">Alles, was du über das Spiel wissen musst.</p>
+        <div class="faq-list">
+            <div class="faq-item">
+                <button class="faq-question">Ist das Spiel kostenlos spielbar? <span class="faq-icon">+</span></button>
+                <div class="faq-answer">Ja, „Realistischer Straßenfußball“ ist komplett kostenlos auf Roblox spielbar. Es gibt optionale kosmetische In-Game-Käufe, die das Gameplay jedoch nicht beeinflussen.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">Auf welchen Geräten kann ich spielen? <span class="faq-icon">+</span></button>
+                <div class="faq-answer">Das Spiel ist für PC, Mac, Xbox, iOS und Android verfügbar – überall dort, wo du Roblox spielen kannst. Cross-Play wird vollständig unterstützt.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">Gibt es einen Ranglisten-Modus? <span class="faq-icon">+</span></button>
+                <div class="faq-answer">Absolut! Unser Ranglisten-System umfasst Bronze, Silber, Gold, Platin und Legende. Du steigst durch Siege auf und kannst dich mit den besten Spielern messen.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">Wie oft wird das Spiel aktualisiert? <span class="faq-icon">+</span></button>
+                <div class="faq-answer">Wir veröffentlichen alle zwei Wochen Updates mit neuen Courts, Bugfixes und saisonalen Events. Große Content-Updates erscheinen etwa alle zwei Monate.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">Kann ich mit Freunden ein privates Match erstellen? <span class="faq-icon">+</span></button>
+                <div class="faq-answer">Ja, du kannst private Lobbys mit Passwort erstellen und Freunde einladen. Perfekt für Trainings oder Freundschaftsturniere.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Kontakt -->
+    <section id="contact">
+        <span class="section-label">Kontakt</span>
+        <h2 class="section-title">Schreib uns</h2>
+        <p class="section-subtitle">Hast du Feedback, einen Bug gefunden oder möchtest du einfach Hallo sagen? Wir freuen uns auf deine Nachricht!</p>
+        <form class="contact-form" id="contactForm">
+            <input type="text" placeholder="Dein Name" required>
+            <input type="email" placeholder="Deine E-Mail-Adresse" required>
+            <textarea placeholder="Deine Nachricht an uns..." required></textarea>
+            <button type="submit" class="btn btn-primary" style="align-self:flex-start;">✉️ Nachricht senden</button>
+            <div class="form-success" id="formSuccess">✅ Vielen Dank! Deine Nachricht wurde erfolgreich gesendet. Wir melden uns bald!</div>
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 <strong>Realistischer Straßenfußball</strong>. Alle Rechte vorbehalten. | <a href="https://www.roblox.com" target="_blank" rel="noopener">Auf Roblox spielen</a></p>
+        <p style="margin-top:6px;font-size:0.8rem;">Dieses Spiel ist ein Fan-Projekt auf der Roblox-Plattform und steht in keiner Verbindung zu offiziellen Fußballverbänden.</p>
+    </footer>
 
     <script>
-        // --- 1. THREE.JS SETUP ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Himmelblau
-        scene.fog = new THREE.Fog(0x87CEEB, 20, 50);
-
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        document.body.appendChild(renderer.domElement);
-
-        // Licht
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(10, 20, 10);
-        dirLight.castShadow = true;
-        dirLight.shadow.camera.left = -15;
-        dirLight.shadow.camera.right = 15;
-        dirLight.shadow.camera.top = 15;
-        dirLight.shadow.camera.bottom = -15;
-        scene.add(dirLight);
-
-        // --- 2. 3D SZENE (PLATZ & TOR) ---
-        // Boden
-        const floorGeo = new THREE.PlaneGeometry(40, 30);
-        const floorMat = new THREE.MeshLambertMaterial({ color: 0x228B22 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.receiveShadow = true;
-        scene.add(floor);
-
-        // Linien
-        function createLine(points) {
-            const geo = new THREE.BufferGeometry().setFromPoints(points);
-            const mat = new THREE.LineBasicMaterial({ color: 0xffffff });
-            return new THREE.Line(geo, mat);
-        }
-        scene.add(createLine([new THREE.Vector3(-15, 0.1, -12), new THREE.Vector3(15, 0.1, -12)])); // Strafraum
-
-        // Tor
-        const pillarMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-        function createPillar(x, y, z) {
-            const p = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 2.5, 8), pillarMat);
-            p.position.set(x, y, z);
-            return p;
-        }
-        const goalGroup = new THREE.Group();
-        goalGroup.add(createPillar(-2.5, 1.25, -15));
-        goalGroup.add(createPillar(2.5, 1.25, -15));
-        const crossbar = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 5, 8), pillarMat);
-        crossbar.rotation.z = Math.PI / 2;
-        crossbar.position.set(0, 2.5, -15);
-        goalGroup.add(crossbar);
-        scene.add(goalGroup);
-
-        // Netz (Einfache Platte)
-        const netMat = new THREE.MeshBasicMaterial({ color: 0xcccccc, wireframe: true, transparent: true, opacity: 0.3 });
-        const net = new THREE.Mesh(new THREE.PlaneGeometry(5, 2.5), netMat);
-        net.position.set(0, 1.25, -15.1);
-        scene.add(net);
-
-        // --- 3. SPIELER, BALL & TORWART ---
-        let playerTeam = { shirt: 0xff0000, pants: 0xffffff }; // Standard Kroatien
-        let score = 0;
-
-        // Spieler-Charakter
-        const playerGroup = new THREE.Group();
-        // Torso
-        const torsoMat = new THREE.MeshLambertMaterial({ color: playerTeam.shirt });
-        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 0.4), torsoMat);
-        torso.position.y = 0.85;
-        // Beine
-        const legMat = new THREE.MeshLambertMaterial({ color: playerTeam.pants });
-        const legL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), legMat);
-        legL.position.set(-0.2, 0.35, 0);
-        const legR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), legMat);
-        legR.position.set(0.2, 0.35, 0);
-        // Kopf
-        const headMat = new THREE.MeshLambertMaterial({ color: 0xffaa88 });
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), headMat);
-        head.position.y = 1.45;
-        
-        playerGroup.add(torso, legL, legR, head);
-        playerGroup.position.set(0, 0, 5);
-        playerGroup.castShadow = true;
-        scene.add(playerGroup);
-
-        // Ball
-        const ballMat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.3, metalness: 0.2 });
-        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), ballMat);
-        ball.position.set(0, 0.25, 4.5);
-        ball.castShadow = true;
-        scene.add(ball);
-        
-        // Ball Physik Variablen
-        let velocity = new THREE.Vector3(0, 0, 0);
-
-        // Torwart (KI)
-        const keeperGroup = new THREE.Group();
-        const keeperMat = new THREE.MeshLambertMaterial({ color: 0xffff00 });
-        const keeperBody = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.8, 8), keeperMat);
-        keeperBody.position.y = 0.4;
-        const keeperHead = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshLambertMaterial({ color: 0xffaa88 }));
-        keeperHead.position.y = 1.0;
-        keeperGroup.add(keeperBody, keeperHead);
-        keeperGroup.position.set(0, 0, -14.5);
-        scene.add(keeperGroup);
-
-        let keeperTargetPos = new THREE.Vector3(0, 0, -14.5);
-        let isSaving = false;
-        let saveTimer = 0;
-
-        // --- 4. STEUERUNG & EINGABEN ---
-        const keys = { w: false, a: false, s: false, d: false, space: false };
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'w' || e.key === 'W') keys.w = true;
-            if (e.key === 'a' || e.key === 'A') keys.a = true;
-            if (e.key === 's' || e.key === 'S') keys.s = true;
-            if (e.key === 'd' || e.key === 'D') keys.d = true;
-            if (e.key === ' ') { keys.space = true; e.preventDefault(); }
-        });
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'w' || e.key === 'W') keys.w = false;
-            if (e.key === 'a' || e.key === 'A') keys.a = false;
-            if (e.key === 's' || e.key === 'S') keys.s = false;
-            if (e.key === 'd' || e.key === 'D') keys.d = false;
-            if (e.key === ' ') { keys.space = false; e.preventDefault(); }
-        });
-
-        // --- 5. TEAM-AUSWAHL UI ---
-        const uiOverlay = document.getElementById('ui-overlay');
-        document.getElementById('btn-croatia').onclick = () => {
-            playerTeam.shirt = 0xff0000; playerTeam.pants = 0xffffff;
-            updatePlayerColors();
-            uiOverlay.style.display = 'none';
-        };
-        document.getElementById('btn-sweden').onclick = () => {
-            playerTeam.shirt = 0xfecb00; playerTeam.pants = 0x006eb6;
-            updatePlayerColors();
-            uiOverlay.style.display = 'none';
-        };
-
-        function updatePlayerColors() {
-            torso.material.color.setHex(playerTeam.shirt);
-            legL.material.color.setHex(playerTeam.pants);
-            legR.material.color.setHex(playerTeam.pants);
-            // Torwart Farben an Team anpassen
-            if(playerTeam.shirt === 0xff0000) keeperMat.color.setHex(0x0000ff); // Rot -> Blauer TW
-            else keeperMat.color.setHex(0xffaa00); // Gelb -> Oranger TW
-        }
-
-        // --- 6. SPIEL-LOGIK (PHYSIK & KI) ---
-        function handleShoot() {
-            if (velocity.length() > 0.1) return; // Ball bereits unterwegs
-
-            // Richtung ermitteln
-            const dir = new THREE.Vector3(0, 0, -1);
-            dir.applyQuaternion(playerGroup.quaternion);
-            
-            // Ball schießen
-            velocity.copy(dir.multiplyScalar(0.8));
-            velocity.y = 0.4; // Flaches "Hoch" (Lupfer)
-            
-            ball.position.copy(playerGroup.position);
-            ball.position.y = 0.25;
-            ball.position.z -= 1.5; // Vor den Spieler legen
-            velocity.z -= 0.2; // Etwas Schwung nach vorne geben
-        }
-
-        function updateKeeper() {
-            if (velocity.length() > 0.1) { // Wenn Ball fliegt
-                isSaving = true;
-                // KI Logik: Zufälliges Ziel (Links, Rechts, Oben)
-                if (saveTimer <= 0) {
-                    const rand = Math.random();
-                    let targetX = 0, targetY = 0;
-                    if (rand < 0.33) { targetX = -2.5; targetY = 1.5; } // Links
-                    else if (rand < 0.66) { targetX = 2.5; targetY = 1.5; } // Rechts
-                    else { targetX = 0; targetY = 3.0; } // Oben springen
-                    
-                    keeperTargetPos.set(targetX, targetY, -14.5);
-                    saveTimer = 15; // Erhöhte Reaktionszeit für Bewegung
-                }
-            } else {
-                isSaving = false;
-                if (saveTimer <= 0) {
-                    keeperTargetPos.set(0, 1, -14.5); // Rückkehr zur Mitte
-                }
-            }
-            saveTimer--;
-
-            // Bewegung (Lerp / Smooth)
-            keeperGroup.position.x += (keeperTargetPos.x - keeperGroup.position.x) * 0.15;
-            keeperGroup.position.y += (keeperTargetPos.y - keeperGroup.position.y) * 0.15;
-            if (keeperGroup.position.y < 1) keeperGroup.position.y = 1; // Boden-Höhe
-        }
-
-        // --- 7. ANIMATIONS-SCHLEIFE ---
-        const staminaBar = document.getElementById('stamina-bar');
-        const scoreDisplay = document.getElementById('score-display');
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // 1. Spieler-Bewegung
-            const speed = 0.15;
-            const moveDir = new THREE.Vector3(0, 0, 0);
-            if (keys.w) moveDir.z -= 1;
-            if (keys.s) moveDir.z += 1;
-            if (keys.a) { moveDir.x -= 1; playerGroup.rotation.y += 0.05; }
-            if (keys.d) { moveDir.x += 1; playerGroup.rotation.y -= 0.05; }
-            
-            if (moveDir.length() > 0) {
-                moveDir.normalize();
-                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(playerGroup.quaternion);
-                const right = new THREE.Vector3(1, 0, 0).applyQuaternion(playerGroup.quaternion);
-                const movement = forward.multiplyScalar(moveDir.z).add(right.multiplyScalar(moveDir.x));
-                playerGroup.position.add(movement.multiplyScalar(speed));
-                
-                // Begrenzung Spielfeld
-                playerGroup.position.x = Math.max(-13, Math.min(13, playerGroup.position.x));
-                playerGroup.position.z = Math.max(-13, Math.min(15, playerGroup.position.z));
+        (function() {
+            // ─── PARTICLES ───
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 35; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                const size = Math.random() * 6 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 6 + 5) + 's';
+                particle.style.background = Math.random() < 0.5 ? 'var(--green)' : 'var(--gold)';
+                particlesContainer.appendChild(particle);
             }
 
-            // 2. Ball Physik
-            if (velocity.length() > 0.01) {
-                velocity.y -= 0.015; // Schwerkraft
-                ball.position.add(velocity);
-                
-                // Boden-Abprall
-                if (ball.position.y < 0.25) {
-                    ball.position.y = 0.25;
-                    velocity.y *= -0.5; // Dämpfung
-                    if (Math.abs(velocity.y) < 0.05) velocity.y = 0;
+            // ─── NAVIGATION ───
+            const navbar = document.getElementById('navbar');
+            const menuToggle = document.getElementById('menuToggle');
+            const navLinks = document.getElementById('navLinks');
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) navbar.classList.add('scrolled');
+                else navbar.classList.remove('scrolled');
+            });
+
+            menuToggle.addEventListener('click', () => {
+                menuToggle.classList.toggle('active');
+                navLinks.classList.toggle('active');
+            });
+
+            // Close mobile menu on link click
+            navLinks.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    menuToggle.classList.remove('active');
+                    navLinks.classList.remove('active');
+                });
+            });
+
+            // ─── FAQ ACCORDION ───
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', () => {
+                    const isOpen = item.classList.contains('open');
+                    // Close all
+                    faqItems.forEach(i => i.classList.remove('open'));
+                    // Open clicked (if it wasn't already open)
+                    if (!isOpen) item.classList.add('open');
+                });
+            });
+
+            // ─── STATS COUNTER ───
+            const statNumbers = document.querySelectorAll('.stat-number');
+            let statsAnimated = false;
+
+            function animateStats() {
+                if (statsAnimated) return;
+                const statsSection = document.getElementById('stats');
+                const rect = statsSection.getBoundingClientRect();
+                if (rect.top < window.innerHeight - 100 && rect.bottom > 0) {
+                    statsAnimated = true;
+                    statNumbers.forEach(el => {
+                        const target = parseFloat(el.getAttribute('data-target'));
+                        const isDecimal = target % 1 !== 0;
+                        const duration = 2000;
+                        const startTime = performance.now();
+                        const startVal = 0;
+
+                        function update(now) {
+                            const elapsed = now - startTime;
+                            const progress = Math.min(elapsed / duration, 1);
+                            const eased = 1 - Math.pow(1 - progress, 3); // ease-out
+                            const current = startVal + (target - startVal) * eased;
+                            el.textContent = isDecimal ? current.toFixed(1) : Math.floor(current)
+                                .toLocaleString('de-DE');
+                            if (progress < 1) requestAnimationFrame(update);
+                            else el.textContent = isDecimal ? target.toFixed(1) : Math.floor(target)
+                                .toLocaleString('de-DE');
+                        }
+                        requestAnimationFrame(update);
+                    });
                 }
-                
-                // Wände (Seitlich)
-                if (Math.abs(ball.position.x) > 14) { velocity.x *= -0.5; ball.position.x = 14 * Math.sign(ball.position.x); }
-                if (ball.position.z < -17) { // Tor erzielt!
-                    if (ball.position.x > -2.5 && ball.position.x < 2.5) {
-                        score++;
-                        scoreDisplay.innerText = score;
-                        // Reset Ball
-                        velocity.set(0, 0, 0);
-                        ball.position.set(0, 0.25, 4);
-                    } else {
-                        velocity.x *= -0.5;
-                        velocity.z *= -0.5;
-                        ball.position.z = -16.5;
+            }
+
+            window.addEventListener('scroll', animateStats);
+            animateStats(); // initial check
+
+            // ─── CONTACT FORM ───
+            const contactForm = document.getElementById('contactForm');
+            const formSuccess = document.getElementById('formSuccess');
+            contactForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                formSuccess.classList.add('show');
+                contactForm.reset();
+                setTimeout(() => {
+                    formSuccess.classList.remove('show');
+                }, 4000);
+            });
+
+            // ─── SMOOTH SCROLL FOR ALL ANCHOR LINKS ───
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    const target = document.querySelector(targetId);
+                    if (target) {
+                        e.preventDefault();
+                        const navHeight = navbar.offsetHeight;
+                        const targetPosition = target.getBoundingClientRect().top + window
+                            .pageYOffset - navHeight - 10;
+                        window.scrollTo({ top: targetPosition, behavior: 'smooth' });
                     }
-                }
-                if (ball.position.z > 17) { velocity.z *= -0.5; ball.position.z = 16.5; }
-
-                // Dämpfung (Reibung)
-                velocity.x *= 0.99;
-                velocity.z *= 0.99;
-            } else {
-                velocity.set(0, 0, 0);
-                // Ball am Boden kleben lassen
-                if(ball.position.y > 0.25) ball.position.y -= 0.1;
-            }
-
-            // 3. Torwart Interaktion
-            if (ball.position.distanceTo(keeperGroup.position) < 0.6) {
-                // Abgefangen!
-                velocity.set(0, 0, 0);
-                ball.position.set(0, 0.25, 4); // Zurücksetzen
-            }
-
-            // 4. Schießen
-            if (keys.space && velocity.length() < 0.05) {
-                handleShoot();
-                keys.space = false; // Einzelschuss
-                staminaBar.style.width = '10%'; // "Ausdauer" Effekt
-                setTimeout(() => { staminaBar.style.width = '100%'; }, 1000);
-            }
-
-            // 5. KI Keeper Logik
-            updateKeeper();
-
-            // 6. Kamera (Third-Person)
-            const camOffset = new THREE.Vector3(0, 2, 6);
-            const targetPos = playerGroup.position.clone().add(camOffset);
-            camera.position.lerp(targetPos, 0.1);
-            camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1, playerGroup.position.z - 2);
-
-            renderer.render(scene, camera);
-        }
-
-        // Fenster Größe anpassen
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        animate();
+                });
+            });
+        })();
     </script>
 </body>
 </html>
