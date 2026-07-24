@@ -1,47 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-    <meta charset="utf-8" />
-    <title>Foosball Game</title>
-    <script src="js/SAT.js"></script>
-   <link rel="stylesheet" type="text/css" href="css/style.css" />
+<meta charset="UTF-8">
+<title>Minecraft 2D Mine</title>
+<style>
+body{background:#1a1a1a;color:#fff;font-family:Arial,sans-serif;margin:0;padding:8px;text-align:center;
+-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent;}
+h2{font-size:16px;margin:4px 0 8px;color:#a0ffa0;text-shadow:1px 1px #000;}
+table{margin:0 auto;border-collapse:collapse;border:3px solid #5a3a1a;background:#3d2b1a;}
+td{width:64px;height:64px;text-align:center;vertical-align:middle;padding:2px;border:2px solid #2a1a0a;
+cursor:pointer;background:#1e0f00;}
+.block{width:52px;height:52px;margin:0 auto;border:2px solid rgba(0,0,0,0.6);border-radius:4px;
+box-shadow:inset 2px 2px 0 rgba(255,255,255,0.2),inset -2px -2px 0 rgba(0,0,0,0.4);}
+.block-stein{background:#7c7c7c;}
+.block-kohle{background:#3a3a3a;}
+.block-eisen{background:#c49a6c;}
+.block-gold{background:#f5c842;}
+.block-diamant{background:#4de8ff;}
+.block-luft{background:#2a2a2a;box-shadow:inset 0 0 0 rgba(0,0,0,0);border-style:dashed;}
+#ressourcen{margin:10px auto;max-width:320px;background:#2a1a0a;border:2px solid #5a3a1a;padding:8px;
+border-radius:4px;font-size:13px;text-align:left;}
+#ressourcen table{width:100%;border:none;background:transparent;margin:0;}
+#ressourcen td{border:none;background:transparent;padding:3px 6px;font-size:13px;color:#ddd;cursor:default;
+width:auto;height:auto;}
+.mini-block{display:inline-block;width:20px;height:20px;vertical-align:middle;margin-right:6px;
+border:1px solid rgba(0,0,0,0.5);border-radius:2px;}
+</style>
 </head>
 <body>
-<div id = "container">
-
-
-    <div id ="startScreen">
-        <div id="title">FoosBall</div>
-        <button id="play" onclick="init()">PLAY</button>
-        <br><br><br>
-        <img src="img/help.png" height="100" width="150" id="help">
-        <br>
-        <span id ="instructions">(Use left and right arrow keys to play)</span>
-        <div id="foot">Written in vanilla Javascript using HTML5 canvas<br><br>By Prashant Baid<br><a href="https://github.com/prashantbaid/football-game" target="_blank">Source Code</a></div>
-    </div>
-
-    <div id ="gameOverScreen">
-        <div id="title">FoosBall</div>
-        <button id="playagain" onclick="init()">PLAY AGAIN</button>
-        <br><br><br>
-    </div>
-
-
-    <canvas id="myCanvas" width="480" height="720"></canvas>
-    <div id="score">
-        <div id = "timer">
-            Time Left
-            <div id = "countdown">02:00</div>
-        </div>
-        <h3 id = "blue">Juventus </h3>
-        <div id="away">0</div>
-        <h3 id = "red">Liverpool</h3>
-        <div id="home">0</div>
-        <div id = "status"></div>
-        <div id = "credits"> Created By <br><a href = "http://twitter.com/prashantbaid" target="_blank">@prashantbaid</a></div>
-    </div>
-    
+<h2>⛏ Minecraft 2D Mine</h2>
+<table id="grid"></table>
+<div id="ressourcen">
+<strong style="color:#ffd700;">Inventar:</strong>
+<table id="inv"></table>
 </div>
+
+<script>
+var blockTypes = [
+  {name:"Stein", cls:"stein", farbe:"#7c7c7c"},
+  {name:"Kohle", cls:"kohle", farbe:"#3a3a3a"},
+  {name:"Eisen", cls:"eisen", farbe:"#c49a6c"},
+  {name:"Gold", cls:"gold", farbe:"#f5c842"},
+  {name:"Diamant", cls:"diamant", farbe:"#4de8ff"}
+];
+var resources = [0,0,0,0,0];
+var gridSize = 5;
+var gridState = [];
+
+function randomBlockType() {
+  var r = Math.random() * 100;
+  if (r < 40) return 0;
+  if (r < 65) return 1;
+  if (r < 85) return 2;
+  if (r < 95) return 3;
+  return 4;
+}
+
+function initGrid() {
+  for (var i = 0; i < gridSize; i++) {
+    gridState[i] = [];
+    for (var j = 0; j < gridSize; j++) {
+      gridState[i][j] = randomBlockType();
+    }
+  }
+}
+
+function renderGrid() {
+  var table = document.getElementById("grid");
+  var html = "";
+  for (var i = 0; i < gridSize; i++) {
+    html += "<tr>";
+    for (var j = 0; j < gridSize; j++) {
+      var typ = gridState[i][j];
+      var cls = "block-luft";
+      var title = "Leer";
+      if (typ >= 0) {
+        cls = "block-" + blockTypes[typ].cls;
+        title = blockTypes[typ].name;
+      }
+      html += '<td onclick="mine(' + i + ',' + j + ',this)" title="' + title + '">' +
+              '<div class="block ' + cls + '" id="b_' + i + '_' + j + '"></div></td>';
+    }
+    html += "</tr>";
+  }
+  table.innerHTML = html;
+}
+
+function renderInventory() {
+  var inv = document.getElementById("inv");
+  var html = "";
+  for (var t = 0; t < blockTypes.length; t++) {
+    html += "<tr><td><span class='mini-block' style='background:" + blockTypes[t].farbe +
+            ";'></span>" + blockTypes[t].name + "</td><td><strong>" + resources[t] + "</strong></td></tr>";
+  }
+  inv.innerHTML = html;
+}
+
+function mine(row, col, cell) {
+  var typ = gridState[row][col];
+  if (typ < 0) return;
+  resources[typ]++;
+  gridState[row][col] = -1;
+  var blockDiv = document.getElementById("b_" + row + "_" + col);
+  if (blockDiv) {
+    blockDiv.className = "block block-luft";
+    cell.title = "Leer";
+  }
+  renderInventory();
+  setTimeout(function() {
+    gridState[row][col] = randomBlockType();
+    var newTyp = gridState[row][col];
+    var bDiv = document.getElementById("b_" + row + "_" + col);
+    if (bDiv) {
+      bDiv.className = "block block-" + blockTypes[newTyp].cls;
+      cell.title = blockTypes[newTyp].name;
+    }
+  }, 600);
+}
+
+initGrid();
+renderGrid();
+renderInventory();
+</script>
 </body>
-<script src="js/football.js"></script>
 </html>
