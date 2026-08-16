@@ -5,29 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chess.de - Schach spielen</title>
     
-    <!-- Externe Libs -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
     
     <style>
-        /* ========== GLOBALE STYLES ========== */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            background-color: #1a1a1a;
-            color: #ffffff;
+            background-color: #1a1a1a; color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0; padding: 0; padding-bottom: 70px;
-            overflow-x: hidden;
+            margin: 0; padding: 0; padding-bottom: 70px; overflow-x: hidden;
         }
         .hide { display: none !important; }
         .flex-center { display: flex; align-items: center; justify-content: center; }
 
-        /* ========== NAVIGATION ========== */
         .app-header {
             background: #1a1a1a; padding: 15px 20px;
-            border-bottom: 1px solid #333;
-            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;
         }
         .app-header .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
         .app-header .logo span { color: #81b64c; font-weight: bold; }
@@ -41,12 +35,11 @@
         .nav-item.active { color: #81b64c; }
         .nav-icon { font-size: 22px; }
 
-        /* ========== SCREENS ========== */
         .screen { padding: 15px; animation: fadeIn 0.2s ease-in-out; display: none; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* HOME SCREEN */
+        /* ===== HOME ===== */
         .tactics-card {
             background: linear-gradient(135deg, #2c4a3e, #1b3329); border-radius: 12px; padding: 20px;
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
@@ -61,20 +54,19 @@
         .stat-card .val { font-size: 20px; font-weight: bold; margin-top: 5px; }
         .stat-card .lbl { font-size: 12px; color: #aaa; }
 
-        /* PLAY / MENU SCREEN */
-        .list-card { background: #2b2b2b; border-radius: 12px; padding: 18px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; cursor: pointer; }
-        .list-card:active { background: #3a3a3a; } /* Klick-Feedback */
+        /* ===== MENÜ KARTEN ===== */
+        .list-card { background: #2b2b2b; border-radius: 12px; padding: 18px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; cursor: pointer; transition: 0.1s; }
+        .list-card:active { background: #3a3a3a; transform: scale(0.98); }
         .list-card .icon { font-size: 22px; }
         .list-card .title { font-size: 16px; font-weight: 500; }
         .green-btn { background: #81b64c; color: white; width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 20px; font-weight: bold; margin: 20px 0; cursor: pointer; }
-        .green-btn:active { background: #6ea23b; }
+        .green-btn:active { background: #6ea23b; transform: scale(0.98); }
         .section-header { color: #aaa; font-weight: 600; margin: 20px 0 15px; font-size: 14px; }
 
-        /* ZEIT WAHLEN MODAL */
+        /* ===== MODALS ===== */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-            background: rgba(0,0,0,0.85); z-index: 999; display: none;
-            justify-content: center; align-items: flex-end;
+            background: rgba(0,0,0,0.85); z-index: 999; display: none; justify-content: center; align-items: flex-end;
         }
         .modal-content {
             background: #1a1a1a; width: 100%; max-width: 600px; max-height: 85vh;
@@ -86,18 +78,13 @@
         .time-option { background: #2b2b2b; padding: 15px 0; border-radius: 8px; text-align: center; font-weight: bold; }
         .time-option.active { outline: 2px solid #81b64c; background: #263a20; }
 
-        /* ================================================== */
-        /* ===== KONFIGURATIONS MODAL (NAME & LAND) ===== */
-        /* ================================================== */
         .config-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-            background: rgba(0,0,0,0.9); z-index: 999; display: none;
-            justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.9); z-index: 999; display: none; justify-content: center; align-items: center;
         }
         .config-modal-content {
-            background: #1e1e1e; width: 90%; max-width: 400px;
-            border-radius: 15px; padding: 25px; display: flex; flex-direction: column; gap: 20px;
-            border: 1px solid #333;
+            background: #1e1e1e; width: 90%; max-width: 400px; border-radius: 15px; padding: 25px;
+            display: flex; flex-direction: column; gap: 20px; border: 1px solid #333;
         }
         .config-row { display: flex; flex-direction: column; gap: 5px; }
         .config-row label { font-size: 13px; color: #aaa; font-weight: bold; }
@@ -107,26 +94,13 @@
             padding: 10px; border-radius: 6px; font-size: 15px; outline: none;
         }
         .config-input-row input:focus { border-color: #81b64c; }
-        .config-input-row select {
-            background: #2b2b2b; border: 1px solid #444; color: white;
-            padding: 10px; border-radius: 6px; font-size: 15px; outline: none; cursor: pointer;
-        }
-        .config-input-row select:focus { border-color: #81b64c; }
-        .config-play-btn {
-            background: #81b64c; color: white; padding: 15px; border: none;
-            border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%;
-        }
+        .config-input-row select { background: #2b2b2b; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 15px; outline: none; cursor: pointer; }
+        .config-play-btn { background: #81b64c; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
 
-        /* ================================================== */
-        /* ========== GAME SCREEN ========== */
-        /* ================================================== */
+        /* ===== GAME ===== */
         #screen-game { padding: 0 !important; background: #302e2b; height: 100vh; display: none; flex-direction: column; }
         #screen-game.active { display: flex; }
-
-        .game-header-top {
-            padding: 15px; display: flex; justify-content: space-between; align-items: center;
-            background: #302e2b; border-bottom: 2px solid #252321;
-        }
+        .game-header-top { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #302e2b; border-bottom: 2px solid #252321; }
         .player-profile { display: flex; align-items: center; gap: 10px; }
         .player-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 22px; color: #555; }
         .player-name { font-weight: 600; font-size: 14px; }
@@ -138,29 +112,23 @@
         #myBoard .board-b72b1 .black-3c85d { background-color: #779556 !important; }
         #myBoard .board-b72b1 { border: none; }
 
-        .game-header-bottom {
-            padding: 15px; display: flex; justify-content: space-between; align-items: center;
-            background: #302e2b; border-top: 2px solid #252321;
-        }
+        .game-header-bottom { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #302e2b; border-top: 2px solid #252321; }
         .timer-box-white { background: #ffffff; color: #000; border-radius: 6px; padding: 10px 18px; font-weight: bold; font-size: 16px; font-family: monospace; display: flex; align-items: center; gap: 6px; }
 
-        .game-controls {
-            background: #252321; display: flex; justify-content: space-around; padding: 15px 10px; margin-top: auto;
-        }
+        .game-controls { background: #252321; display: flex; justify-content: space-around; padding: 15px 10px; margin-top: auto; }
         .control-icon { color: #666; font-size: 24px; cursor: pointer; font-weight: bold; }
         .control-icon:hover { color: #fff; }
     </style>
 </head>
 <body>
 
-    <!-- HEADER -->
     <header class="app-header">
         <div style="font-size: 20px;">🧑‍💻</div>
         <div class="logo"><span>♟</span> Chess.de</div>
         <div style="color: #aaa; font-size: 18px;">💎</div>
     </header>
 
-    <!-- ====== SCREEN 1: STARTSEITE ====== -->
+    <!-- SCREEN 1: STARTSEITE -->
     <div id="screen-home" class="screen active">
         <div class="tactics-card">
             <div>
@@ -168,9 +136,8 @@
                 <div style="font-size: 12px;">157</div>
                 <div class="progress"><div class="fill"></div></div>
             </div>
-            <button class="solve-btn" onclick="alert('Taktik-Modus wird geladen...')">Solve!</button>
+            <button class="solve-btn" onclick="startGameMode('tactics')">Solve!</button>
         </div>
-
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <div style="font-weight: bold;">Statistiken</div>
             <div style="color: #aaa; font-size: 12px;">Alle ansehen</div>
@@ -180,8 +147,6 @@
             <div class="stat-card"><div style="font-size: 24px;">⏱️</div><div class="val">263</div><div class="lbl">Schnell</div></div>
             <div class="stat-card"><div style="font-size: 24px;">⚡</div><div class="val">1500</div><div class="lbl">Blitz</div></div>
         </div>
-
-        <!-- Freunde Sektion -->
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <div style="font-weight: bold;">Freunde</div>
             <div style="color: #aaa; font-size: 12px;">Alle ansehen</div>
@@ -190,12 +155,12 @@
             <div style="font-size: 32px; margin-bottom: 10px;">👥</div>
             <div style="font-weight: bold; margin-bottom: 5px;">Noch keine Freunde</div>
             <div style="font-size: 13px; color: #aaa; margin-bottom: 15px;">Füge Freunde hinzu, um gemeinsam zu spielen.</div>
-            <button onclick="alert('Freunde suchen...')" style="background: #444; color: white; border: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer;">Freunde suchen</button>
+            <button onclick="alert('Funktion zum Suchen von Freunden folgt in einem Update.')" style="background: #444; color: white; border: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer;">Freunde suchen</button>
         </div>
         <div style="height: 60px;"></div>
     </div>
 
-    <!-- ====== SCREEN 2: SPIELEN ====== -->
+    <!-- SCREEN 2: SPIELEN -->
     <div id="screen-play" class="screen">
         <div style="font-size: 28px; text-align: center; margin: 10px 0;">♟️</div>
         <div style="text-align: center; font-weight: bold; font-size: 22px; margin-bottom: 15px;">Spielen</div>
@@ -206,38 +171,36 @@
             <div style="margin-left: auto; color: #aaa;">▼</div>
         </div>
 
-        <!-- HAUPTFUNKTION -->
-        <button class="green-btn" onclick="showConfigModal()">Partie starten</button>
+        <!-- ALLE BUTTONS STARTEN JETZT EIN SPIEL -->
+        <button class="green-btn" onclick="startGameMode('local')">Partie starten</button>
 
-        <div class="list-card" onclick="alert('Turniere sind noch in Entwicklung.')"><div class="icon">🏆</div><div class="title">Turniere</div></div>
-        <div class="list-card" onclick="alert('Lokal gegen einen Freund (bald möglich).')"><div class="icon">👥</div><div class="title">Gegen einen Freund spielen</div></div>
-        <div class="list-card" onclick="alert('Gegen Bots ist in dieser Version deaktiviert.')"><div class="icon">🤖</div><div class="title">Spiel gegen Bots</div></div>
-        <div class="list-card" onclick="alert('Coach-Modus ist noch nicht verfügbar.')"><div class="icon">👨‍🏫</div><div class="title">Gegen Coach spielen</div></div>
+        <div class="list-card" onclick="startGameMode('tournament')"><div class="icon">🏆</div><div class="title">Turniere</div></div>
+        <div class="list-card" onclick="startGameMode('friend')"><div class="icon">👥</div><div class="title">Gegen einen Freund spielen</div></div>
+        <div class="list-card" onclick="startGameMode('bot')"><div class="icon">🤖</div><div class="title">Spiel gegen Bots</div></div>
+        <div class="list-card" onclick="startGameMode('coach')"><div class="icon">👨‍🏫</div><div class="title">Gegen Coach spielen</div></div>
         
         <div class="section-header">Mehr</div>
-        
-        <!-- DIE UNTEREN MODIES (JETZT MIT KLICKFUNKTION) -->
-        <div class="list-card" onclick="alert('Trainingsmodus kommt bald!')"><div class="icon">✏️</div><div class="title">Trainingsmodus</div></div>
-        <div class="list-card" onclick="alert('Persönliches Spiel kommt bald!')"><div class="icon">📱</div><div class="title">Persönlich spielen</div></div>
+        <div class="list-card" onclick="startGameMode('training')"><div class="icon">✏️</div><div class="title">Trainingsmodus</div></div>
+        <div class="list-card" onclick="startGameMode('personal')"><div class="icon">📱</div><div class="title">Persönlich spielen</div></div>
     </div>
 
-    <!-- ====== SCREEN 3: MENÜ (Lernen) ====== -->
+    <!-- SCREEN 3: MENÜ -->
     <div id="screen-menu" class="screen">
         <div class="section-header">Lernen</div>
-        <div class="list-card" onclick="alert('Analyse Funktion folgt...')"><div class="icon">🔍</div><div class="title">Analyse</div></div>
-        <div class="list-card" onclick="alert('Explorer Funktion folgt...')"><div class="icon">🌐</div><div class="title">Explorer</div></div>
-        <div class="list-card" onclick="alert('Tiefe Einblicke Funktion folgt...')"><div class="icon">💡</div><div class="title">Tiefe Einblicke</div></div>
-        <div class="list-card" onclick="alert('Videos Funktion folgt...')"><div class="icon">▶️</div><div class="title">Videos</div></div>
-        <div class="list-card" onclick="alert('Solo-Schach Funktion folgt...')"><div class="icon">♟️</div><div class="title">Solo-Schach</div></div>
-        <div class="list-card" onclick="alert('Training Funktion folgt...')"><div class="icon">✅</div><div class="title">Training</div></div>
+        <div class="list-card" onclick="alert('Lern-Modus in Entwicklung')"><div class="icon">🔍</div><div class="title">Analyse</div></div>
+        <div class="list-card" onclick="alert('Explorer in Entwicklung')"><div class="icon">🌐</div><div class="title">Explorer</div></div>
+        <div class="list-card" onclick="alert('Einblicke in Entwicklung')"><div class="icon">💡</div><div class="title">Tiefe Einblicke</div></div>
+        <div class="list-card" onclick="alert('Videos in Entwicklung')"><div class="icon">▶️</div><div class="title">Videos</div></div>
+        <div class="list-card" onclick="startGameMode('solo')"><div class="icon">♟️</div><div class="title">Solo-Schach</div></div>
+        <div class="list-card" onclick="startGameMode('training')"><div class="icon">✅</div><div class="title">Training</div></div>
         <div class="section-header">Verbinden</div>
-        <div class="list-card" onclick="alert('Events Funktion folgt...')"><div class="icon">🏆</div><div class="title">Events</div></div>
-        <div class="list-card" onclick="alert('Bestenliste Funktion folgt...')"><div class="icon">📊</div><div class="title">Bestenliste</div></div>
-        <div class="list-card" onclick="alert('Ligen Funktion folgt...')"><div class="icon">🏅</div><div class="title">Ligen</div></div>
-        <div class="list-card" onclick="alert('ChessTV Funktion folgt...')"><div class="icon">📺</div><div class="title">ChessTV</div></div>
+        <div class="list-card" onclick="alert('Events in Entwicklung')"><div class="icon">🏆</div><div class="title">Events</div></div>
+        <div class="list-card" onclick="alert('Bestenliste in Entwicklung')"><div class="icon">📊</div><div class="title">Bestenliste</div></div>
+        <div class="list-card" onclick="alert('Ligen in Entwicklung')"><div class="icon">🏅</div><div class="title">Ligen</div></div>
+        <div class="list-card" onclick="alert('ChessTV in Entwicklung')"><div class="icon">📺</div><div class="title">ChessTV</div></div>
     </div>
 
-    <!-- ====== SCREEN 4: PROFIL ====== -->
+    <!-- SCREEN 4: PROFIL -->
     <div id="screen-profile" class="screen">
         <div class="flex-center" style="flex-direction: column; gap: 10px; padding: 20px 0;">
             <div style="width: 70px; height: 70px; background: #2b2b2b; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; outline: 3px solid #888;">👨</div>
@@ -255,7 +218,7 @@
         </div>
     </div>
 
-    <!-- ====== SCREEN 5: SPIELBRETT ====== -->
+    <!-- SCREEN 5: SPIEL -->
     <div id="screen-game">
         <div class="game-header-top">
             <div class="player-profile">
@@ -283,13 +246,13 @@
 
         <div class="game-controls">
             <div class="control-icon" onclick="backToPlay()">≡</div>
-            <div class="control-icon" onclick="alert('Chat in Entwicklung')">💬</div>
-            <div class="control-icon" onclick="alert('Zurück zu letztem Zug (nicht implementiert)')">‹</div>
-            <div class="control-icon" onclick="alert('Vor zu nächstem Zug (nicht implementiert)')">›</div>
+            <div class="control-icon">💬</div>
+            <div class="control-icon">‹</div>
+            <div class="control-icon">›</div>
         </div>
     </div>
 
-    <!-- ====== ZEITWÄHLEN MODAL ====== -->
+    <!-- MODALS -->
     <div id="time-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -299,32 +262,31 @@
             </div>
             <div style="color: #aaa; margin-bottom: 10px;">🚀 Bullet</div>
             <div class="time-grid">
-                <div class="time-option" onclick="alert('1 Min ausgewählt')">1 Min</div>
-                <div class="time-option" onclick="alert('1 + 1 ausgewählt')">1 + 1</div>
-                <div class="time-option" onclick="alert('2 + 1 ausgewählt')">2 + 1</div>
+                <div class="time-option" onclick="alert('1 Min ausgewählt (nur Grafik)')">1 Min</div>
+                <div class="time-option" onclick="alert('1 + 1 ausgewählt (nur Grafik)')">1 + 1</div>
+                <div class="time-option" onclick="alert('2 + 1 ausgewählt (nur Grafik)')">2 + 1</div>
             </div>
             <div style="color: #aaa; margin-bottom: 10px;">⚡ Blitz</div>
             <div class="time-grid">
-                <div class="time-option" onclick="alert('3 Min ausgewählt')">3 Min</div>
-                <div class="time-option" onclick="alert('3 + 2 ausgewählt')">3 + 2</div>
-                <div class="time-option" onclick="alert('5 Min ausgewählt')">5 Min</div>
+                <div class="time-option" onclick="alert('3 Min ausgewählt (nur Grafik)')">3 Min</div>
+                <div class="time-option" onclick="alert('3 + 2 ausgewählt (nur Grafik)')">3 + 2</div>
+                <div class="time-option" onclick="alert('5 Min ausgewählt (nur Grafik)')">5 Min</div>
             </div>
             <div style="color: #aaa; margin-bottom: 10px;">⏱️ Schnellschach</div>
             <div class="time-grid">
-                <div class="time-option active" onclick="alert('10 Min ausgewählt')">10 Min</div>
-                <div class="time-option" onclick="alert('15 + 10 ausgewählt')">15 + 10</div>
-                <div class="time-option" onclick="alert('30 Min ausgewählt')">30 Min</div>
+                <div class="time-option active" onclick="alert('10 Min ausgewählt (nur Grafik)')">10 Min</div>
+                <div class="time-option" onclick="alert('15 + 10 ausgewählt (nur Grafik)')">15 + 10</div>
+                <div class="time-option" onclick="alert('30 Min ausgewählt (nur Grafik)')">30 Min</div>
             </div>
         </div>
     </div>
 
-    <!-- ====== KONFIGURATIONS MODAL ====== -->
     <div id="config-modal" class="config-modal-overlay">
         <div class="config-modal-content">
-            <div style="text-align: center; font-weight: bold; font-size: 18px;">Spieler Konfiguration</div>
+            <div id="config-title" style="text-align: center; font-weight: bold; font-size: 18px;">Spieler Konfiguration</div>
             
             <div class="config-row">
-                <label>👤 Dein Name (Spieler 1)</label>
+                <label id="p1-label">👤 Dein Name (Spieler 1)</label>
                 <div class="config-input-row">
                     <input type="text" id="p1-name" placeholder="Dein Name" value="Mehdi1exe">
                     <select id="p1-flag">
@@ -342,7 +304,7 @@
             </div>
 
             <div class="config-row">
-                <label>👤 Gegner Name (Spieler 2)</label>
+                <label id="p2-label">👤 Gegner Name (Spieler 2)</label>
                 <div class="config-input-row">
                     <input type="text" id="p2-name" placeholder="Gegner Name" value="Gegner">
                     <select id="p2-flag">
@@ -363,7 +325,7 @@
         </div>
     </div>
 
-    <!-- ====== UNTERE NAVIGATION ====== -->
+    <!-- NAVIGATION -->
     <nav class="bottom-nav" id="app-nav">
         <div class="nav-item active" onclick="switchScreen('home', this)"><span class="nav-icon">🏠</span>Startseite</div>
         <div class="nav-item" onclick="switchScreen('play', this)"><span class="nav-icon">🧩</span>Spielen</div>
@@ -372,20 +334,23 @@
         <div class="nav-item" onclick="switchScreen('menu', this)"><span class="nav-icon">≡</span>Mehr</div>
     </nav>
 
-    <!-- ====== JAVASCRIPT LOGIK ====== -->
     <script>
-        // Seiten-Navigation (Abgesichert, funktioniert auch wenn jQuery nicht lädt)
-        window.switchScreen = function(screenId, navElement) {
+        // GLOBALE VARIABLEN
+        let gameMode = 'local';
+        let isGameOver = false;
+        let gameInstance = null;
+        let boardInstance = null;
+        let isBotTurn = false;
+
+        function switchScreen(screenId, navElement) {
             document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-            var targetScreen = document.getElementById('screen-' + screenId);
-            if(targetScreen) targetScreen.classList.add('active');
+            document.getElementById('screen-' + screenId).classList.add('active');
             
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if(navElement) navElement.classList.add('active');
 
             if(screenId === 'game') {
                 document.getElementById('app-nav').style.display = 'none';
-                // Initialisiere das Brett nur, wenn es noch nicht läuft
                 if(!window.gameInstance && typeof Chessboard !== 'undefined') { 
                     initChessBoard(); 
                 }
@@ -394,23 +359,46 @@
             }
         }
 
-        // Modal Öffnen/Schließen
-        window.toggleTimeModal = function(show) {
-            var modal = document.getElementById('time-modal');
-            if(modal) modal.style.display = show ? 'flex' : 'none';
+        // MODAL FUNKTIONEN
+        function toggleTimeModal(show) {
+            document.getElementById('time-modal').style.display = show ? 'flex' : 'none';
         }
 
-        window.showConfigModal = function() {
+        function startGameMode(mode) {
             toggleTimeModal(false);
-            var modal = document.getElementById('config-modal');
-            if(modal) modal.style.display = 'flex';
+            gameMode = mode; // local, bot, coach, friend, etc.
+
+            // Setze die Labels je nach Modus
+            const titleEl = document.getElementById('config-title');
+            const p1Label = document.getElementById('p1-label');
+            const p2Label = document.getElementById('p2-label');
+            const p2NameInput = document.getElementById('p2-name');
+            const p2NameDisplay = document.getElementById('p2-name-display');
+            const p1NameDisplay = document.getElementById('p1-name-display');
+
+            if (mode === 'bot' || mode === 'coach' || mode === 'training' || mode === 'solo') {
+                titleEl.innerText = '🤖 ' + (mode === 'coach' ? 'Gegen Coach' : 'Gegen Bot') + ' spielen';
+                p2Label.innerText = '🤖 Name des Gegners (Bot)';
+                p2NameInput.value = (mode === 'coach') ? 'Schach Coach' : 'Chess Bot';
+                p2NameInput.disabled = true; // Name kann nicht geändert werden
+                // Zeige den Bot-Namen sofort an
+                p2NameDisplay.innerText = p2NameInput.value;
+            } else {
+                titleEl.innerText = '👥 Lokales Spiel starten';
+                p2Label.innerText = '👤 Gegner Name (Spieler 2)';
+                p2NameInput.value = 'Gegner';
+                p2NameInput.disabled = false;
+                p2NameDisplay.innerText = 'Gegner';
+            }
+            p1NameDisplay.innerText = document.getElementById('p1-name').value || 'Ich';
+            document.getElementById('config-modal').style.display = 'flex';
         }
 
-        window.startGameWithConfig = function() {
-            var p1Name = document.getElementById('p1-name').value || 'Spieler 1';
-            var p1Flag = document.getElementById('p1-flag').value || '🇩🇪';
-            var p2Name = document.getElementById('p2-name').value || 'Spieler 2';
-            var p2Flag = document.getElementById('p2-flag').value || '🇮🇳';
+        function startGameWithConfig() {
+            const p1Name = document.getElementById('p1-name').value || 'Spieler 1';
+            const p1Flag = document.getElementById('p1-flag').value || '🇩🇪';
+            let p2Name = document.getElementById('p2-name').value || 'Spieler 2';
+            const p2Flag = document.getElementById('p2-flag').value || '🇮🇳';
 
             document.getElementById('p1-name-display').innerText = p1Name;
             document.getElementById('p1-flag-display').innerText = p1Flag;
@@ -419,16 +407,18 @@
 
             document.getElementById('config-modal').style.display = 'none';
             switchScreen('game', document.querySelectorAll('.nav-item')[1]);
+
+            // Wenn Bot-Modus, starten wir das Spiel und warten auf den ersten Zug des Menschen
+            isBotTurn = false;
+            isGameOver = false;
         }
 
-        window.backToPlay = function() {
+        function backToPlay() {
+            isBotTurn = false;
             switchScreen('play', document.querySelectorAll('.nav-item')[1]);
         }
 
-        // ===== SCHACHBRETT LOGIK =====
-        var gameInstance = null;
-        var boardInstance = null;
-
+        // SCHACHBRETT + BOT LOGIK
         function initChessBoard() {
             if(window.gameInstance) return; 
             
@@ -437,25 +427,52 @@
                 draggable: true,
                 position: 'start',
                 onDragStart: function (source, piece, position, orientation) {
-                    if (window.gameInstance.game_over()) return false;
+                    if (window.gameInstance.game_over() || isBotTurn) return false;
                     if ((window.gameInstance.turn() === 'w' && piece.search(/^b/) !== -1) ||
                         (window.gameInstance.turn() === 'b' && piece.search(/^w/) !== -1)) {
                         return false;
                     }
                 },
                 onDrop: function (source, target) {
+                    if(window.gameInstance.game_over()) return 'snapback';
                     var move = window.gameInstance.move({
                         from: source,
                         to: target,
                         promotion: 'q'
                     });
                     if (move === null) return 'snapback';
+                    
+                    window.boardInstance.position(window.gameInstance.fen());
+                    isGameOver = window.gameInstance.game_over();
+
+                    // Wenn es ein Bot-Spiel ist und das Spiel nicht vorbei ist, starte den Bot-Zug
+                    if ((gameMode === 'bot' || gameMode === 'coach') && !isGameOver) {
+                        isBotTurn = true;
+                        setTimeout(makeBotMove, 600); // 600ms Verzögerung für den Bot
+                    }
                 },
                 onSnapEnd: function () {
                     if(window.boardInstance) window.boardInstance.position(window.gameInstance.fen());
                 }
             };
             window.boardInstance = Chessboard('myBoard', config);
+        }
+
+        // Bot Logik (Wählt einfach einen zufälligen legalen Zug)
+        function makeBotMove() {
+            if(!window.gameInstance || window.gameInstance.game_over()) {
+                isBotTurn = false;
+                return;
+            }
+
+            const moves = window.gameInstance.moves();
+            if (moves.length > 0) {
+                const randomMove = moves[Math.floor(Math.random() * moves.length)];
+                window.gameInstance.move(randomMove);
+                window.boardInstance.position(window.gameInstance.fen());
+                isGameOver = window.gameInstance.game_over();
+            }
+            isBotTurn = false;
         }
     </script>
 </body>
