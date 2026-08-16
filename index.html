@@ -97,7 +97,7 @@
         .config-input-row select { background: #2b2b2b; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 15px; outline: none; cursor: pointer; }
         .config-play-btn { background: #81b64c; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
 
-        /* ===== GAME ===== */
+        /* ===== GAME (WICHTIG FÜR HANDYS) ===== */
         #screen-game { padding: 0 !important; background: #302e2b; height: 100vh; display: none; flex-direction: column; }
         #screen-game.active { display: flex; }
         .game-header-top { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #302e2b; border-bottom: 2px solid #252321; }
@@ -107,10 +107,13 @@
         .timer-box-dark { background: #1f1f1f; border-radius: 8px; padding: 10px 18px; font-weight: bold; font-size: 16px; font-family: monospace; }
 
         .game-board-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; background: #302e2b; padding: 10px 0; }
-        #myBoard { width: 100%; max-width: 450px; }
+        
+        #myBoard { width: 100%; max-width: 450px; aspect-ratio: 1 / 1; } /* Erzwingt Quadrat, auch bei JS-Fehlern */
         #myBoard .board-b72b1 .white-1e1d7 { background-color: #baca76 !important; }
         #myBoard .board-b72b1 .black-3c85d { background-color: #779556 !important; }
         #myBoard .board-b72b1 { border: none; }
+        /* Wenn das Board einen Rendering-Fehler hat, wird dieses Fallback sichtbar */
+        #myBoard .error-placeholder { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; color: #888; font-size: 14px; }
 
         .game-header-bottom { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #302e2b; border-top: 2px solid #252321; }
         .timer-box-white { background: #ffffff; color: #000; border-radius: 6px; padding: 10px 18px; font-weight: bold; font-size: 16px; font-family: monospace; display: flex; align-items: center; gap: 6px; }
@@ -123,7 +126,7 @@
 <body>
 
     <header class="app-header">
-        <div style="font-size: 20px;">🧑‍💻</div>
+        <div id="header-user-display" style="font-size: 20px;">🧑‍💻 Mehdi1exe</div>
         <div class="logo"><span>♟</span> Chess.de</div>
         <div style="color: #aaa; font-size: 18px;">💎</div>
     </header>
@@ -171,7 +174,6 @@
             <div style="margin-left: auto; color: #aaa;">▼</div>
         </div>
 
-        <!-- ALLE BUTTONS STARTEN JETZT EIN SPIEL -->
         <button class="green-btn" onclick="startGameMode('local')">Partie starten</button>
 
         <div class="list-card" onclick="startGameMode('tournament')"><div class="icon">🏆</div><div class="title">Turniere</div></div>
@@ -204,8 +206,37 @@
     <div id="screen-profile" class="screen">
         <div class="flex-center" style="flex-direction: column; gap: 10px; padding: 20px 0;">
             <div style="width: 70px; height: 70px; background: #2b2b2b; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; outline: 3px solid #888;">👨</div>
-            <div style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: bold;">Mehdi1exe 🇩🇪</div>
-            <div style="color: #aaa; font-size: 14px;">Beigetreten 6. Dezember 2025</div>
+            
+            <div id="profile-view-mode" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: bold;">
+                    <span id="profile-name-display">Mehdi1exe</span> 
+                    <span id="profile-flag-display">🇩🇪</span>
+                    <span onclick="toggleProfileEdit()" style="font-size: 16px; color: #888; cursor: pointer; background: #2b2b2b; padding: 4px 10px; border-radius: 5px; margin-left: 5px;">✎</span>
+                </div>
+                <div style="color: #aaa; font-size: 14px;">Beigetreten 6. Dezember 2025</div>
+            </div>
+
+            <div id="profile-edit-mode" class="hide" style="display: none; flex-direction: column; align-items: center; width: 100%; gap: 10px;">
+                <div class="config-input-row" style="width: 100%;">
+                    <input type="text" id="profile-name-input" placeholder="Dein Name" style="flex: 1; background: #2b2b2b; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 16px; outline: none;">
+                    <select id="profile-flag-input" style="background: #2b2b2b; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 16px; outline: none; cursor: pointer;">
+                        <option value="🇩🇪">🇩🇪 DE</option>
+                        <option value="🇺🇸">🇺🇸 USA</option>
+                        <option value="🇦🇹">🇦🇹 AT</option>
+                        <option value="🇨🇭">🇨🇭 CH</option>
+                        <option value="🇬🇧">🇬🇧 UK</option>
+                        <option value="🇫🇷">🇫🇷 FR</option>
+                        <option value="🇪🇸">🇪🇸 ES</option>
+                        <option value="🇮🇹">🇮🇹 IT</option>
+                        <option value="🇮🇳">🇮🇳 IN</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button onclick="saveProfile()" style="flex:1; background: #81b64c; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">Speichern</button>
+                    <button onclick="toggleProfileEdit()" style="flex:1; background: #444; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;">Abbrechen</button>
+                </div>
+            </div>
+
             <div onclick="alert('Freunde hinzufügen...')" style="width: 100%; background: #2b2b2b; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; cursor: pointer;">
                 <div>👤+ Freunde hinzufügen</div>
                 <div style="color: #aaa;">🔗</div>
@@ -288,9 +319,9 @@
             <div class="config-row">
                 <label id="p1-label">👤 Dein Name (Spieler 1)</label>
                 <div class="config-input-row">
-                    <input type="text" id="p1-name" placeholder="Dein Name" value="Mehdi1exe">
+                    <input type="text" id="p1-name" placeholder="Dein Name">
                     <select id="p1-flag">
-                        <option value="🇩🇪" selected>🇩🇪 DE</option>
+                        <option value="🇩🇪">🇩🇪 DE</option>
                         <option value="🇺🇸">🇺🇸 USA</option>
                         <option value="🇦🇹">🇦🇹 AT</option>
                         <option value="🇨🇭">🇨🇭 CH</option>
@@ -335,13 +366,50 @@
     </nav>
 
     <script>
-        // GLOBALE VARIABLEN
         let gameMode = 'local';
         let isGameOver = false;
         let gameInstance = null;
         let boardInstance = null;
         let isBotTurn = false;
 
+        // PROFIL LOGIK
+        function loadUserProfile() {
+            const name = localStorage.getItem('chess_de_user_name') || 'Mehdi1exe';
+            const flag = localStorage.getItem('chess_de_user_flag') || '🇩🇪';
+            
+            document.getElementById('profile-name-display').innerText = name;
+            document.getElementById('profile-flag-display').innerText = flag;
+            document.getElementById('profile-name-input').value = name;
+            document.getElementById('profile-flag-input').value = flag;
+            document.getElementById('header-user-display').innerText = '🧑‍💻 ' + name;
+            document.getElementById('p1-name').value = name;
+            document.getElementById('p1-flag').value = flag;
+        }
+
+        function toggleProfileEdit() {
+            const view = document.getElementById('profile-view-mode');
+            const edit = document.getElementById('profile-edit-mode');
+            if(view.style.display === 'none') {
+                view.style.display = 'flex';
+                edit.style.display = 'none';
+            } else {
+                view.style.display = 'none';
+                edit.style.display = 'flex';
+            }
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('profile-name-input').value || 'Spieler 1';
+            const flag = document.getElementById('profile-flag-input').value || '🇩🇪';
+            localStorage.setItem('chess_de_user_name', name);
+            localStorage.setItem('chess_de_user_flag', flag);
+            loadUserProfile();
+            toggleProfileEdit();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadUserProfile);
+
+        // NAVIGATION & MODALS
         function switchScreen(screenId, navElement) {
             document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
             document.getElementById('screen-' + screenId).classList.add('active');
@@ -351,37 +419,38 @@
 
             if(screenId === 'game') {
                 document.getElementById('app-nav').style.display = 'none';
-                if(!window.gameInstance && typeof Chessboard !== 'undefined') { 
-                    initChessBoard(); 
-                }
+                // FIX FÜR DAS UNSICHTBARE BRETT AUF HANDYS:
+                setTimeout(() => {
+                    if(!window.gameInstance && typeof Chessboard !== 'undefined') { 
+                        initChessBoard(); 
+                    }
+                }, 150); 
             } else {
                 document.getElementById('app-nav').style.display = 'flex';
             }
         }
 
-        // MODAL FUNKTIONEN
         function toggleTimeModal(show) {
             document.getElementById('time-modal').style.display = show ? 'flex' : 'none';
         }
 
         function startGameMode(mode) {
             toggleTimeModal(false);
-            gameMode = mode; // local, bot, coach, friend, etc.
+            gameMode = mode;
 
-            // Setze die Labels je nach Modus
             const titleEl = document.getElementById('config-title');
-            const p1Label = document.getElementById('p1-label');
             const p2Label = document.getElementById('p2-label');
             const p2NameInput = document.getElementById('p2-name');
             const p2NameDisplay = document.getElementById('p2-name-display');
-            const p1NameDisplay = document.getElementById('p1-name-display');
+            
+            document.getElementById('p1-name').value = localStorage.getItem('chess_de_user_name') || 'Mehdi1exe';
+            document.getElementById('p1-flag').value = localStorage.getItem('chess_de_user_flag') || '🇩🇪';
 
             if (mode === 'bot' || mode === 'coach' || mode === 'training' || mode === 'solo') {
                 titleEl.innerText = '🤖 ' + (mode === 'coach' ? 'Gegen Coach' : 'Gegen Bot') + ' spielen';
                 p2Label.innerText = '🤖 Name des Gegners (Bot)';
                 p2NameInput.value = (mode === 'coach') ? 'Schach Coach' : 'Chess Bot';
-                p2NameInput.disabled = true; // Name kann nicht geändert werden
-                // Zeige den Bot-Namen sofort an
+                p2NameInput.disabled = true;
                 p2NameDisplay.innerText = p2NameInput.value;
             } else {
                 titleEl.innerText = '👥 Lokales Spiel starten';
@@ -390,7 +459,6 @@
                 p2NameInput.disabled = false;
                 p2NameDisplay.innerText = 'Gegner';
             }
-            p1NameDisplay.innerText = document.getElementById('p1-name').value || 'Ich';
             document.getElementById('config-modal').style.display = 'flex';
         }
 
@@ -408,7 +476,6 @@
             document.getElementById('config-modal').style.display = 'none';
             switchScreen('game', document.querySelectorAll('.nav-item')[1]);
 
-            // Wenn Bot-Modus, starten wir das Spiel und warten auf den ersten Zug des Menschen
             isBotTurn = false;
             isGameOver = false;
         }
@@ -418,7 +485,7 @@
             switchScreen('play', document.querySelectorAll('.nav-item')[1]);
         }
 
-        // SCHACHBRETT + BOT LOGIK
+        // SCHACHBRETT
         function initChessBoard() {
             if(window.gameInstance) return; 
             
@@ -445,10 +512,9 @@
                     window.boardInstance.position(window.gameInstance.fen());
                     isGameOver = window.gameInstance.game_over();
 
-                    // Wenn es ein Bot-Spiel ist und das Spiel nicht vorbei ist, starte den Bot-Zug
                     if ((gameMode === 'bot' || gameMode === 'coach') && !isGameOver) {
                         isBotTurn = true;
-                        setTimeout(makeBotMove, 600); // 600ms Verzögerung für den Bot
+                        setTimeout(makeBotMove, 600); 
                     }
                 },
                 onSnapEnd: function () {
@@ -458,13 +524,11 @@
             window.boardInstance = Chessboard('myBoard', config);
         }
 
-        // Bot Logik (Wählt einfach einen zufälligen legalen Zug)
         function makeBotMove() {
             if(!window.gameInstance || window.gameInstance.game_over()) {
                 isBotTurn = false;
                 return;
             }
-
             const moves = window.gameInstance.moves();
             if (moves.length > 0) {
                 const randomMove = moves[Math.floor(Math.random() * moves.length)];
